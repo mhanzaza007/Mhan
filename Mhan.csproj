@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <AssemblyName>Mhan</AssemblyName>
+    <AssemblyTitle>Mhan</AssemblyTitle>
+    <Product>Mhan</Product>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Mhan.ico</ApplicationIcon>
+    <WindowsSdkPackageVersion>10.0.26100.87</WindowsSdkPackageVersion>
+  </PropertyGroup>
+</Project>
+

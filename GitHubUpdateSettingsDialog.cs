@@ -17,43 +17,79 @@ internal sealed class GitHubUpdateSettingsDialog : Form
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = false;
-        ClientSize = new Size(510, 325);
+        ClientSize = new Size(560, 410);
+        BackColor = Color.FromArgb(244, 242, 238);
+        ForeColor = Color.FromArgb(40, 38, 42);
         Font = new Font("Segoe UI", 9.5F);
+
+        var header = new Panel { Dock = DockStyle.Top, Height = 72, BackColor = Color.FromArgb(40, 36, 42) };
+        var headerAccent = new Panel { Dock = DockStyle.Left, Width = 4, BackColor = Color.FromArgb(193, 67, 80) };
+        var title = new Label
+        {
+            Text = "อัปเดตอัตโนมัติ",
+            AutoSize = true,
+            Font = new Font("Segoe UI", 15F, FontStyle.Bold),
+            ForeColor = Color.White,
+            Location = new Point(20, 10)
+        };
+        var subtitle = new Label
+        {
+            Text = "เชื่อมต่อ Release ของ Mhan บน GitHub",
+            AutoSize = true,
+            ForeColor = Color.FromArgb(207, 200, 203),
+            Location = new Point(21, 42)
+        };
+        header.Controls.AddRange([title, subtitle, headerAccent]);
 
         var description = new Label
         {
             Text = "Mhan ต้องใช้ GitHub token แบบอ่านอย่างเดียวเพื่อดาวน์โหลด Release จาก repository ส่วนตัวของคุณ\nสร้าง token แบบ Fine-grained แล้วกำหนดให้เข้าถึงเฉพาะ Mhan และ Contents: Read-only",
-            Location = new Point(18, 18),
-            Size = new Size(475, 52)
+            Location = new Point(20, 88),
+            Size = new Size(520, 48),
+            ForeColor = Color.FromArgb(71, 66, 69)
         };
         var link = new LinkLabel
         {
             Text = "เปิดหน้าสร้าง Fine-grained token ใน GitHub",
-            Location = new Point(18, 79),
+            Location = new Point(20, 142),
             AutoSize = true
         };
+        link.LinkColor = Color.FromArgb(79, 93, 150);
+        link.ActiveLinkColor = Color.FromArgb(60, 70, 120);
         link.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo(
             "https://github.com/settings/personal-access-tokens/new") { UseShellExecute = true });
 
         var scopeHelp = new Label
         {
             Text = "ตั้งค่า Repository access เป็น Only select repositories → Mhan\nPermissions → Repository permissions → Contents: Read-only\nจากนั้นสร้าง token แล้ววางด้านล่าง (ไม่ต้องส่ง token ให้ใคร)",
-            Location = new Point(18, 108),
-            Size = new Size(475, 58)
+            Location = new Point(20, 171),
+            Size = new Size(520, 58),
+            ForeColor = Color.FromArgb(99, 94, 97)
         };
 
-        var tokenLabel = new Label { Text = "GitHub token", AutoSize = true, Location = new Point(18, 180) };
-        _token.SetBounds(18, 202, 475, 30);
+        var tokenLabel = new Label
+        {
+            Text = "GitHub token",
+            AutoSize = true,
+            Font = new Font(Font, FontStyle.Bold),
+            Location = new Point(20, 240)
+        };
+        _token.SetBounds(20, 263, 520, 31);
         _token.UseSystemPasswordChar = true;
+        _token.BorderStyle = BorderStyle.FixedSingle;
+        _token.BackColor = Color.FromArgb(250, 249, 247);
+        _token.ForeColor = ForeColor;
         _token.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
         _status.Text = GitHubTokenStore.Load() is null
             ? "ยังไม่ได้ตั้งค่า token"
             : "มี token ที่บันทึกแบบเข้ารหัสสำหรับบัญชี Windows นี้แล้ว";
-        _status.SetBounds(18, 241, 475, 22);
+        _status.SetBounds(20, 304, 520, 22);
         _status.AutoEllipsis = true;
+        _status.ForeColor = Color.FromArgb(103, 98, 100);
 
-        var forget = new Button { Text = "ลบ token", Location = new Point(18, 276), Size = new Size(95, 32) };
+        var forget = new Button { Text = "ลบ token", Location = new Point(20, 350), Size = new Size(100, 36) };
+        StyleButton(forget, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
         forget.Click += (_, _) =>
         {
             GitHubTokenStore.Delete();
@@ -62,14 +98,27 @@ internal sealed class GitHubUpdateSettingsDialog : Form
             _status.Text = "ลบ token แล้ว; Mhan จะไม่ตรวจอัปเดตอัตโนมัติ";
         };
 
-        var cancel = new Button { Text = "ปิด", Location = new Point(296, 276), Size = new Size(85, 32), DialogResult = DialogResult.Cancel };
+        var cancel = new Button { Text = "ปิด", Location = new Point(350, 350), Size = new Size(80, 36), DialogResult = DialogResult.Cancel };
+        StyleButton(cancel, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
         _save.Text = "ตรวจสอบและบันทึก";
-        _save.SetBounds(390, 276, 103, 32);
+        _save.SetBounds(440, 350, 100, 36);
+        StyleButton(_save, Color.FromArgb(185, 55, 69), Color.White);
         _save.Click += async (_, _) => await ValidateAndSaveAsync();
 
-        Controls.AddRange([description, link, scopeHelp, tokenLabel, _token, _status, forget, cancel, _save]);
+        Controls.AddRange([header, description, link, scopeHelp, tokenLabel, _token, _status, forget, cancel, _save]);
         AcceptButton = _save;
         CancelButton = cancel;
+    }
+
+    private static void StyleButton(Button button, Color backColor, Color foreColor)
+    {
+        button.BackColor = backColor;
+        button.ForeColor = foreColor;
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = 0;
+        button.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        button.Cursor = Cursors.Hand;
+        button.UseVisualStyleBackColor = false;
     }
 
     private async Task ValidateAndSaveAsync()

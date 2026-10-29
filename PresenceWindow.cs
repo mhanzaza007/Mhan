@@ -9,6 +9,7 @@ internal sealed class PresenceWindow : Form
     private readonly CheckBox _showAppleMusic = new();
     private readonly Label _status = new();
     private readonly Label _track = new();
+    private readonly Panel _statusDot = new();
     private readonly Button _startButton = new();
     private readonly Button _stopButton = new();
     private readonly System.Windows.Forms.Timer _pollTimer = new() { Interval = 2500 };
@@ -33,8 +34,8 @@ internal sealed class PresenceWindow : Form
         _startInBackground = startInBackground;
         Text = "Mhan";
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(510, 357);
-        MinimumSize = new Size(526, 397);
+        ClientSize = new Size(720, 590);
+        MinimumSize = new Size(680, 560);
         Font = new Font("Segoe UI", 10F);
         _appIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         Icon = _appIcon;
@@ -71,72 +72,177 @@ internal sealed class PresenceWindow : Form
 
     private void BuildInterface()
     {
-        var heading = new Label
-        {
-            Text = "แชร์เพลง Apple Music ไปยัง Discord",
-            AutoSize = true,
-            Font = new Font(Font, FontStyle.Bold),
-            Location = new Point(22, 18)
-        };
+        BackColor = Color.FromArgb(244, 242, 238);
+        ForeColor = Color.FromArgb(40, 38, 42);
 
-        var intro = new Label
+        var layout = new TableLayoutPanel
         {
-            Text = "ใส่ Application ID ของ Discord แล้วกดเริ่มแชร์\nโปรแกรมจะแสดงชื่อเพลงกับศิลปินขณะกำลังเล่น",
-            AutoSize = true,
-            Location = new Point(22, 53)
+            Dock = DockStyle.Fill,
+            BackColor = BackColor,
+            Padding = new Padding(24),
+            ColumnCount = 1,
+            RowCount = 9
         };
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 112));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        var selectionLabel = new Label
+        var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(40, 36, 42), Padding = new Padding(20, 12, 18, 12) };
+        var accent = new Panel { Dock = DockStyle.Left, Width = 4, BackColor = Color.FromArgb(193, 67, 80) };
+        var brand = new Label
         {
-            Text = "เลือกสิ่งที่จะแสดงใน Discord",
+            Text = "Mhan",
             AutoSize = true,
-            Font = new Font(Font, FontStyle.Bold),
-            Location = new Point(22, 105)
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 19F, FontStyle.Bold),
+            Location = new Point(20, 8)
+        };
+        var subtitle = new Label
+        {
+            Text = "Apple Music  →  Discord",
+            AutoSize = true,
+            ForeColor = Color.FromArgb(207, 200, 203),
+            Font = new Font("Segoe UI", 9.5F),
+            Location = new Point(22, 42)
+        };
+        header.Controls.AddRange([brand, subtitle, accent]);
+
+        var musicCard = CreateCard();
+        var musicHeading = CreateSectionHeading("การแสดงผล");
+        musicHeading.Location = new Point(18, 14);
+        var musicHint = new Label
+        {
+            Text = "เลือกข้อมูลที่ต้องการแชร์บนโปรไฟล์ Discord",
+            AutoSize = true,
+            ForeColor = Color.FromArgb(116, 111, 113),
+            Location = new Point(18, 40)
         };
         _showAppleMusic.Text = "Apple Music";
-        _showAppleMusic.SetBounds(22, 127, 180, 28);
+        _showAppleMusic.AutoSize = true;
+        _showAppleMusic.Font = new Font(Font, FontStyle.Bold);
+        _showAppleMusic.ForeColor = ForeColor;
+        _showAppleMusic.Location = new Point(18, 72);
+        var musicDetail = new Label
+        {
+            Text = "ชื่อเพลงและศิลปินขณะแอปกำลังเล่นเพลง",
+            AutoSize = true,
+            ForeColor = Color.FromArgb(116, 111, 113),
+            Location = new Point(150, 75),
+            Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right
+        };
+        musicCard.Controls.AddRange([musicHeading, musicHint, _showAppleMusic, musicDetail]);
 
-        var idLabel = new Label { Text = "Discord Application ID", AutoSize = true, Location = new Point(22, 162) };
-        _applicationId.SetBounds(22, 186, 455, 30);
+        var discordCard = CreateCard();
+        var discordHeading = CreateSectionHeading("เชื่อมต่อ Discord");
+        discordHeading.Location = new Point(18, 14);
+        var idLabel = new Label
+        {
+            Text = "Application ID",
+            AutoSize = true,
+            ForeColor = Color.FromArgb(99, 94, 97),
+            Location = new Point(18, 45)
+        };
+        _applicationId.SetBounds(18, 68, 500, 31);
         _applicationId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        _applicationId.BorderStyle = BorderStyle.FixedSingle;
+        _applicationId.BackColor = Color.FromArgb(250, 249, 247);
+        _applicationId.ForeColor = ForeColor;
+        _applicationId.Font = new Font("Segoe UI", 10F);
 
         var developerLink = new LinkLabel
         {
-            Text = "เปิด Discord Developer Portal เพื่อสร้างแอป",
+            Text = "สร้างหรือดู Application ID ใน Discord Developer Portal  ↗",
             AutoSize = true,
-            Location = new Point(22, 221)
+            LinkColor = Color.FromArgb(79, 93, 150),
+            ActiveLinkColor = Color.FromArgb(60, 70, 120),
+            Location = new Point(18, 111)
         };
         developerLink.LinkClicked += (_, _) => OpenDeveloperPortal();
+        discordCard.Controls.AddRange([discordHeading, idLabel, _applicationId, developerLink]);
 
-        _startButton.Text = "บันทึกและเริ่มแชร์";
-        _startButton.SetBounds(22, 251, 150, 36);
+        var actions = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, BackColor = BackColor };
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18));
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
+        _startButton.Text = "บันทึก ID และเริ่มแชร์";
+        StyleButton(_startButton, Color.FromArgb(185, 55, 69), Color.White);
+        _startButton.Margin = new Padding(0, 0, 8, 0);
         _startButton.Click += async (_, _) => await StartPresenceAsync();
 
         _stopButton.Text = "หยุดแชร์";
-        _stopButton.SetBounds(182, 251, 100, 36);
+        StyleButton(_stopButton, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
         _stopButton.Enabled = false;
+        _stopButton.Margin = new Padding(0, 0, 8, 0);
         _stopButton.Click += async (_, _) => await StopPresenceAsync();
 
-        var updatesButton = new Button
-        {
-            Text = "ตั้งค่าอัปเดตอัตโนมัติ",
-            Location = new Point(295, 251),
-            Size = new Size(182, 36),
-            Anchor = AnchorStyles.Top | AnchorStyles.Right
-        };
+        var updatesButton = new Button { Text = "อัปเดตอัตโนมัติ" };
+        StyleButton(updatesButton, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
+        updatesButton.Margin = Padding.Empty;
         updatesButton.Click += (_, _) => ShowUpdateSettings();
+        actions.Controls.Add(_startButton, 0, 0);
+        actions.Controls.Add(_stopButton, 1, 0);
+        actions.Controls.Add(updatesButton, 2, 0);
 
-        _status.Text = "สถานะ: ยังไม่เริ่ม";
+        var statusCard = CreateCard();
+        _statusDot.SetBounds(18, 22, 10, 10);
+        _statusDot.BackColor = Color.FromArgb(181, 145, 84);
+        _status.Text = "ยังไม่เริ่ม";
         _status.AutoSize = true;
-        _status.Location = new Point(22, 299);
-
-        _track.Text = "";
+        _status.Font = new Font(Font, FontStyle.Bold);
+        _status.ForeColor = Color.FromArgb(102, 96, 97);
+        _status.Location = new Point(36, 17);
+        _track.Text = "ใส่ Application ID แล้วเลือกเริ่มแชร์เพื่อเชื่อมต่อ";
         _track.AutoSize = false;
         _track.AutoEllipsis = true;
-        _track.SetBounds(22, 321, 455, 24);
+        _track.ForeColor = Color.FromArgb(116, 111, 113);
+        _track.SetBounds(18, 48, 560, 24);
         _track.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+        statusCard.Controls.AddRange([_statusDot, _status, _track]);
 
-        Controls.AddRange([heading, intro, selectionLabel, _showAppleMusic, idLabel, _applicationId, developerLink, _startButton, _stopButton, updatesButton, _status, _track]);
+        layout.Controls.Add(header, 0, 0);
+        layout.Controls.Add(musicCard, 0, 2);
+        layout.Controls.Add(discordCard, 0, 4);
+        layout.Controls.Add(actions, 0, 6);
+        layout.Controls.Add(statusCard, 0, 8);
+        Controls.Add(layout);
+    }
+
+    private static Panel CreateCard()
+    {
+        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(16) };
+        card.Paint += (_, e) =>
+        {
+            using var pen = new Pen(Color.FromArgb(227, 222, 216));
+            e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+        };
+        return card;
+    }
+
+    private static Label CreateSectionHeading(string text) => new()
+    {
+        Text = text,
+        AutoSize = true,
+        Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+        ForeColor = Color.FromArgb(45, 41, 45)
+    };
+
+    private static void StyleButton(Button button, Color backColor, Color foreColor)
+    {
+        button.Dock = DockStyle.Fill;
+        button.BackColor = backColor;
+        button.ForeColor = foreColor;
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = 0;
+        button.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        button.Cursor = Cursors.Hand;
+        button.UseVisualStyleBackColor = false;
     }
 
     private void ConfigureTrayIcon()
@@ -363,7 +469,19 @@ internal sealed class PresenceWindow : Form
         _lastTrackKey = null;
     }
 
-    private void SetStatus(string message) => _status.Text = $"สถานะ: {message}";
+    private void SetStatus(string message)
+    {
+        _status.Text = message;
+        var color = message.Contains("กำลังแชร์", StringComparison.Ordinal)
+            ? Color.FromArgb(54, 133, 101)
+            : message.Contains("เชื่อมต่อไม่ได้", StringComparison.Ordinal)
+                || message.Contains("ไม่สำเร็จ", StringComparison.Ordinal)
+                || message.Contains("เริ่มไม่ได้", StringComparison.Ordinal)
+                ? Color.FromArgb(185, 55, 69)
+                : Color.FromArgb(181, 145, 84);
+        _status.ForeColor = color;
+        _statusDot.BackColor = color;
+    }
 
     private static string ShortError(Exception exception)
     {

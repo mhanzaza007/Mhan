@@ -36,7 +36,7 @@ After sharing starts, Mhan saves your Application ID and enables startup with Wi
 
 ## Updates
 
-Mhan does not currently update itself. To update, exit Mhan from its tray icon, download the newest `Mhan.exe` from [Releases](https://github.com/mhanzaza007/Mhan/releases/latest), and run it. Changes pushed to the GitHub source do not update copies already on users' PCs; a new release must be published for users to download.
+Mhan does not currently update itself. To install an update, exit Mhan from its tray icon, download the newest `Mhan.exe` from [Releases](https://github.com/mhanzaza007/Mhan/releases/latest), and replace the existing `Mhan.exe` in the same folder. Then open that file again. Replacing it in place keeps the Windows startup shortcut pointed at the correct file; older builds do not need to be kept. Changes pushed to the GitHub source do not update copies already on users' PCs; a new release must be published and downloaded.
 
 ## Build from source
 
@@ -90,7 +90,7 @@ Application ID เป็นเพียงหมายเลขระบุแ�
 
 ## การอัปเดต
 
-ขณะนี้ Mhan ยังอัปเดตตัวเองไม่ได้ หากต้องการอัปเดต ให้คลิกขวาไอคอน Mhan แล้วออกจากโปรแกรม จากนั้นดาวน์โหลด `Mhan.exe` รุ่นล่าสุดจากหน้า [Releases](https://github.com/mhanzaza007/Mhan/releases/latest) แล้วเปิดไฟล์ใหม่ การอัปเดตซอร์สโค้ดบน GitHub จะไม่เปลี่ยนโปรแกรมที่ติดตั้งอยู่ในเครื่องผู้ใช้ ต้องเผยแพร่ Release รุ่นใหม่ให้ดาวน์โหลด
+ขณะนี้ Mhan ยังอัปเดตตัวเองไม่ได้ หากต้องการอัปเดต ให้คลิกขวาไอคอน Mhan แล้วออกจากโปรแกรม ดาวน์โหลด `Mhan.exe` รุ่นล่าสุดจากหน้า [Releases](https://github.com/mhanzaza007/Mhan/releases/latest) แล้วนำไปแทน `Mhan.exe` ตัวเดิมในโฟลเดอร์เดิม จากนั้นเปิดไฟล์นั้นอีกครั้ง การแทนไฟล์ในตำแหน่งเดิมจะทำให้การเปิดพร้อม Windows ยังชี้ถูกไฟล์ และไม่ต้องเก็บ build รุ่นเก่าไว้ การอัปเดตซอร์สโค้ดบน GitHub อย่างเดียวจะไม่เปลี่ยนโปรแกรมในเครื่อง ต้องเผยแพร่ Release รุ่นใหม่และดาวน์โหลดมาติดตั้ง
 
 ## Build จากซอร์สโค้ด
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
 
 namespace AppleMusicDiscordPresence;
@@ -72,8 +73,8 @@ internal sealed class PresenceWindow : Form
 
     private void BuildInterface()
     {
-        BackColor = Color.FromArgb(244, 242, 238);
-        ForeColor = Color.FromArgb(40, 38, 42);
+        BackColor = Color.FromArgb(255, 249, 241);
+        ForeColor = Color.FromArgb(74, 61, 57);
 
         var layout = new TableLayoutPanel
         {
@@ -94,25 +95,37 @@ internal sealed class PresenceWindow : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(40, 36, 42), Padding = new Padding(20, 12, 18, 12) };
-        var accent = new Panel { Dock = DockStyle.Left, Width = 4, BackColor = Color.FromArgb(193, 67, 80) };
+        var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(241, 244, 232), Padding = new Padding(20, 12, 18, 12) };
+        RoundControl(header, 14);
+        var accent = new Panel { Dock = DockStyle.Left, Width = 4, BackColor = Color.FromArgb(132, 153, 111) };
+        var musicMark = new Label
+        {
+            Text = "♫",
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI Symbol", 18F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(103, 130, 82),
+            BackColor = Color.FromArgb(231, 239, 219),
+            Location = new Point(20, 16),
+            Size = new Size(42, 42)
+        };
+        RoundControl(musicMark, 12);
         var brand = new Label
         {
             Text = "Mhan",
             AutoSize = true,
-            ForeColor = Color.White,
+            ForeColor = Color.FromArgb(74, 61, 57),
             Font = new Font("Segoe UI", 19F, FontStyle.Bold),
-            Location = new Point(20, 8)
+            Location = new Point(76, 8)
         };
         var subtitle = new Label
         {
             Text = "Apple Music  →  Discord",
             AutoSize = true,
-            ForeColor = Color.FromArgb(207, 200, 203),
+            ForeColor = Color.FromArgb(132, 139, 111),
             Font = new Font("Segoe UI", 9.5F),
-            Location = new Point(22, 42)
+            Location = new Point(78, 42)
         };
-        header.Controls.AddRange([brand, subtitle, accent]);
+        header.Controls.AddRange([brand, subtitle, musicMark, accent]);
 
         var musicCard = CreateCard();
         var musicHeading = CreateSectionHeading("การแสดงผล");
@@ -121,23 +134,34 @@ internal sealed class PresenceWindow : Form
         {
             Text = "เลือกข้อมูลที่ต้องการแชร์บนโปรไฟล์ Discord",
             AutoSize = true,
-            ForeColor = Color.FromArgb(116, 111, 113),
+            ForeColor = Color.FromArgb(153, 136, 126),
             Location = new Point(18, 40)
         };
         _showAppleMusic.Text = "Apple Music";
         _showAppleMusic.AutoSize = true;
         _showAppleMusic.Font = new Font(Font, FontStyle.Bold);
         _showAppleMusic.ForeColor = ForeColor;
-        _showAppleMusic.Location = new Point(18, 72);
+        _showAppleMusic.Location = new Point(66, 72);
+        var musicNote = new Label
+        {
+            Text = "♫",
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI Symbol", 13F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(103, 130, 82),
+            BackColor = Color.FromArgb(231, 239, 219),
+            Location = new Point(18, 68),
+            Size = new Size(36, 34)
+        };
+        RoundControl(musicNote, 10);
         var musicDetail = new Label
         {
             Text = "ชื่อเพลงและศิลปินขณะแอปกำลังเล่นเพลง",
             AutoSize = true,
-            ForeColor = Color.FromArgb(116, 111, 113),
-            Location = new Point(150, 75),
+            ForeColor = Color.FromArgb(153, 136, 126),
+            Location = new Point(190, 75),
             Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right
         };
-        musicCard.Controls.AddRange([musicHeading, musicHint, _showAppleMusic, musicDetail]);
+        musicCard.Controls.AddRange([musicHeading, musicHint, musicNote, _showAppleMusic, musicDetail]);
 
         var discordCard = CreateCard();
         var discordHeading = CreateSectionHeading("เชื่อมต่อ Discord");
@@ -146,22 +170,23 @@ internal sealed class PresenceWindow : Form
         {
             Text = "Application ID",
             AutoSize = true,
-            ForeColor = Color.FromArgb(99, 94, 97),
+            ForeColor = Color.FromArgb(138, 120, 111),
             Location = new Point(18, 45)
         };
         _applicationId.SetBounds(18, 68, 500, 31);
         _applicationId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         _applicationId.BorderStyle = BorderStyle.FixedSingle;
-        _applicationId.BackColor = Color.FromArgb(250, 249, 247);
+        _applicationId.BackColor = Color.FromArgb(255, 253, 249);
         _applicationId.ForeColor = ForeColor;
         _applicationId.Font = new Font("Segoe UI", 10F);
+        _applicationId.PlaceholderText = "Discord Application ID (ตัวเลข 17–20 หลัก)";
 
         var developerLink = new LinkLabel
         {
             Text = "สร้างหรือดู Application ID ใน Discord Developer Portal  ↗",
             AutoSize = true,
-            LinkColor = Color.FromArgb(79, 93, 150),
-            ActiveLinkColor = Color.FromArgb(60, 70, 120),
+            LinkColor = Color.FromArgb(103, 130, 82),
+            ActiveLinkColor = Color.FromArgb(76, 101, 59),
             Location = new Point(18, 111)
         };
         developerLink.LinkClicked += (_, _) => OpenDeveloperPortal();
@@ -172,18 +197,18 @@ internal sealed class PresenceWindow : Form
         actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18));
         actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
         _startButton.Text = "บันทึก ID และเริ่มแชร์";
-        StyleButton(_startButton, Color.FromArgb(185, 55, 69), Color.White);
+        StyleButton(_startButton, Color.FromArgb(132, 153, 111), Color.White);
         _startButton.Margin = new Padding(0, 0, 8, 0);
         _startButton.Click += async (_, _) => await StartPresenceAsync();
 
         _stopButton.Text = "หยุดแชร์";
-        StyleButton(_stopButton, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
+        StyleButton(_stopButton, Color.FromArgb(244, 235, 226), Color.FromArgb(86, 70, 64));
         _stopButton.Enabled = false;
         _stopButton.Margin = new Padding(0, 0, 8, 0);
         _stopButton.Click += async (_, _) => await StopPresenceAsync();
 
         var updatesButton = new Button { Text = "อัปเดตอัตโนมัติ" };
-        StyleButton(updatesButton, Color.FromArgb(226, 222, 217), Color.FromArgb(58, 54, 57));
+        StyleButton(updatesButton, Color.FromArgb(244, 235, 226), Color.FromArgb(86, 70, 64));
         updatesButton.Margin = Padding.Empty;
         updatesButton.Click += (_, _) => ShowUpdateSettings();
         actions.Controls.Add(_startButton, 0, 0);
@@ -192,16 +217,16 @@ internal sealed class PresenceWindow : Form
 
         var statusCard = CreateCard();
         _statusDot.SetBounds(18, 22, 10, 10);
-        _statusDot.BackColor = Color.FromArgb(181, 145, 84);
+        _statusDot.BackColor = Color.FromArgb(196, 154, 96);
         _status.Text = "ยังไม่เริ่ม";
         _status.AutoSize = true;
         _status.Font = new Font(Font, FontStyle.Bold);
-        _status.ForeColor = Color.FromArgb(102, 96, 97);
+        _status.ForeColor = Color.FromArgb(138, 120, 111);
         _status.Location = new Point(36, 17);
         _track.Text = "ใส่ Application ID แล้วเลือกเริ่มแชร์เพื่อเชื่อมต่อ";
         _track.AutoSize = false;
         _track.AutoEllipsis = true;
-        _track.ForeColor = Color.FromArgb(116, 111, 113);
+        _track.ForeColor = Color.FromArgb(153, 136, 126);
         _track.SetBounds(18, 48, 560, 24);
         _track.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         statusCard.Controls.AddRange([_statusDot, _status, _track]);
@@ -216,13 +241,53 @@ internal sealed class PresenceWindow : Form
 
     private static Panel CreateCard()
     {
-        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(16) };
+        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(255, 253, 249), Padding = new Padding(16) };
+        RoundControl(card, 14);
         card.Paint += (_, e) =>
         {
-            using var pen = new Pen(Color.FromArgb(227, 222, 216));
-            e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var pen = new Pen(Color.FromArgb(237, 226, 215));
+            using var path = CreateRoundedPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 14);
+            e.Graphics.DrawPath(pen, path);
         };
         return card;
+    }
+
+    private static void RoundControl(Control control, int radius)
+    {
+        void ApplyRegion()
+        {
+            if (control.Width < 2 || control.Height < 2) return;
+            using var path = CreateRoundedPath(new Rectangle(0, 0, control.Width, control.Height), radius);
+            var oldRegion = control.Region;
+            control.Region = new Region(path);
+            oldRegion?.Dispose();
+        }
+
+        control.Resize += (_, _) => ApplyRegion();
+        ApplyRegion();
+    }
+
+    private static GraphicsPath CreateRoundedPath(Rectangle bounds, int radius)
+    {
+        var path = new GraphicsPath();
+        var diameter = Math.Min(radius * 2, Math.Min(bounds.Width, bounds.Height));
+        if (diameter < 2)
+        {
+            path.AddRectangle(bounds);
+            return path;
+        }
+
+        var arc = new Rectangle(bounds.X, bounds.Y, diameter, diameter);
+        path.AddArc(arc, 180, 90);
+        arc.X = bounds.Right - diameter;
+        path.AddArc(arc, 270, 90);
+        arc.Y = bounds.Bottom - diameter;
+        path.AddArc(arc, 0, 90);
+        arc.X = bounds.X;
+        path.AddArc(arc, 90, 90);
+        path.CloseFigure();
+        return path;
     }
 
     private static Label CreateSectionHeading(string text) => new()
@@ -243,6 +308,9 @@ internal sealed class PresenceWindow : Form
         button.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
         button.Cursor = Cursors.Hand;
         button.UseVisualStyleBackColor = false;
+        button.FlatAppearance.MouseOverBackColor = ControlPaint.Light(backColor, .08F);
+        button.FlatAppearance.MouseDownBackColor = ControlPaint.Dark(backColor, .05F);
+        RoundControl(button, 10);
     }
 
     private void ConfigureTrayIcon()
@@ -473,12 +541,12 @@ internal sealed class PresenceWindow : Form
     {
         _status.Text = message;
         var color = message.Contains("กำลังแชร์", StringComparison.Ordinal)
-            ? Color.FromArgb(54, 133, 101)
+            ? Color.FromArgb(95, 151, 119)
             : message.Contains("เชื่อมต่อไม่ได้", StringComparison.Ordinal)
                 || message.Contains("ไม่สำเร็จ", StringComparison.Ordinal)
                 || message.Contains("เริ่มไม่ได้", StringComparison.Ordinal)
-                ? Color.FromArgb(185, 55, 69)
-                : Color.FromArgb(181, 145, 84);
+                ? Color.FromArgb(184, 111, 82)
+                : Color.FromArgb(196, 154, 96);
         _status.ForeColor = color;
         _statusDot.BackColor = color;
     }

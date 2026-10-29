@@ -8,6 +8,7 @@ internal sealed class PresenceWindow : Form
 {
     private readonly TextBox _applicationId = new();
     private readonly CheckBox _showAppleMusic = new();
+    private readonly CheckBox _showSpotify = new();
     private readonly Label _status = new();
     private readonly Label _track = new();
     private readonly Panel _statusDot = new();
@@ -35,8 +36,8 @@ internal sealed class PresenceWindow : Form
         _startInBackground = startInBackground;
         Text = "Mhan";
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(720, 590);
-        MinimumSize = new Size(680, 560);
+        ClientSize = new Size(720, 620);
+        MinimumSize = new Size(680, 590);
         Font = new Font("Segoe UI", 10F);
         _appIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         Icon = _appIcon;
@@ -47,7 +48,9 @@ internal sealed class PresenceWindow : Form
         var savedSettings = SettingsStore.Load();
         _applicationId.Text = savedSettings.DiscordApplicationId;
         _showAppleMusic.Checked = savedSettings.ShowAppleMusic;
+        _showSpotify.Checked = savedSettings.ShowSpotify;
         _showAppleMusic.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
+        _showSpotify.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
         _pollTimer.Tick += async (_, _) => await PollAsync();
         _updateTimer.Tick += async (_, _) => await CheckForUpdatesAsync();
         _updateTimer.Start();
@@ -62,10 +65,11 @@ internal sealed class PresenceWindow : Form
                 Hide();
             }
 
-            if (startInBackground && savedSettings.ShowAppleMusic && Regex.IsMatch(savedSettings.DiscordApplicationId, "^[0-9]{17,20}$"))
+            if (startInBackground && (savedSettings.ShowAppleMusic || savedSettings.ShowSpotify)
+                && Regex.IsMatch(savedSettings.DiscordApplicationId, "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
-            else if (startInBackground && !savedSettings.ShowAppleMusic)
-                SetStatus("ปิดการแสดง Apple Music ไว้");
+            else if (startInBackground && !savedSettings.ShowAppleMusic && !savedSettings.ShowSpotify)
+                SetStatus("ปิดแหล่งเพลงที่จะแสดงไว้");
             if (!_updateRestarting)
                 await CheckForUpdatesAsync();
         };
@@ -87,7 +91,7 @@ internal sealed class PresenceWindow : Form
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 128));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 154));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
@@ -130,7 +134,7 @@ internal sealed class PresenceWindow : Form
         };
         var subtitle = new Label
         {
-            Text = "Apple Music  →  Discord",
+            Text = "Apple Music + Spotify  →  Discord",
             Dock = DockStyle.Fill,
             ForeColor = Color.FromArgb(132, 139, 111),
             Font = new Font("Segoe UI", 9.5F),
@@ -158,7 +162,7 @@ internal sealed class PresenceWindow : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 3,
+            RowCount = 4,
             Padding = new Padding(18, 8, 18, 8),
             BackColor = musicCard.BackColor,
             Margin = Padding.Empty
@@ -168,7 +172,8 @@ internal sealed class PresenceWindow : Form
         musicContent.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-        musicContent.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         var musicHeading = CreateSectionHeading("การแสดงผล");
         musicHeading.Dock = DockStyle.Fill;
         musicHeading.TextAlign = ContentAlignment.MiddleLeft;
@@ -215,6 +220,36 @@ internal sealed class PresenceWindow : Form
         musicContent.Controls.Add(musicNote, 0, 2);
         musicContent.Controls.Add(_showAppleMusic, 1, 2);
         musicContent.Controls.Add(musicDetail, 2, 2);
+        _showSpotify.Text = "Spotify";
+        _showSpotify.Dock = DockStyle.Fill;
+        _showSpotify.AutoSize = false;
+        _showSpotify.Font = new Font(Font, FontStyle.Bold);
+        _showSpotify.ForeColor = ForeColor;
+        _showSpotify.TextAlign = ContentAlignment.MiddleLeft;
+        _showSpotify.Margin = Padding.Empty;
+        var spotifyNote = new Label
+        {
+            Text = "S",
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(50, 130, 83),
+            BackColor = Color.FromArgb(232, 243, 233),
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 1, 6, 1)
+        };
+        RoundControl(spotifyNote, 10);
+        var spotifyDetail = new Label
+        {
+            Text = "ชื่อเพลงและศิลปินจาก Spotify",
+            Dock = DockStyle.Fill,
+            AutoEllipsis = true,
+            ForeColor = Color.FromArgb(153, 136, 126),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(6, 0, 0, 0)
+        };
+        musicContent.Controls.Add(spotifyNote, 0, 3);
+        musicContent.Controls.Add(_showSpotify, 1, 3);
+        musicContent.Controls.Add(spotifyDetail, 2, 3);
         musicCard.Controls.Add(musicContent);
 
         var discordCard = CreateCard();
@@ -452,9 +487,9 @@ internal sealed class PresenceWindow : Form
 
     private async Task StartPresenceAsync()
     {
-        if (!_showAppleMusic.Checked)
+        if (!_showAppleMusic.Checked && !_showSpotify.Checked)
         {
-            SetStatus("ติ๊ก Apple Music ก่อนเริ่มแชร์");
+            SetStatus("เลือก Apple Music หรือ Spotify ก่อนเริ่มแชร์");
             return;
         }
 
@@ -478,7 +513,7 @@ internal sealed class PresenceWindow : Form
             _applicationId.Enabled = false;
             _startButton.Enabled = false;
             _stopButton.Enabled = true;
-            SetStatus("กำลังหาเพลง Apple Music...");
+            SetStatus("กำลังหาเพลงจากบริการที่เลือก...");
             _pollTimer.Start();
             await PollAsync();
         }
@@ -496,19 +531,26 @@ internal sealed class PresenceWindow : Form
             var settings = SettingsStore.Load();
             settings.DiscordApplicationId = _applicationId.Text.Trim();
             settings.ShowAppleMusic = _showAppleMusic.Checked;
+            settings.ShowSpotify = _showSpotify.Checked;
             SettingsStore.Save(settings);
 
-            if (!_showAppleMusic.Checked)
+            if (!_showAppleMusic.Checked && !_showSpotify.Checked)
             {
                 if (_isRunning) await StopPresenceAsync();
-                else SetStatus("ปิดการแสดง Apple Music ไว้");
+                else SetStatus("ปิดแหล่งเพลงที่จะแสดงไว้");
                 return;
             }
 
-            if (!_isRunning && Regex.IsMatch(_applicationId.Text.Trim(), "^[0-9]{17,20}$"))
+            if (_isRunning)
+            {
+                await ClearIfNeededAsync();
+                _lastArtworkAvailable = false;
+                await PollAsync();
+            }
+            else if (Regex.IsMatch(_applicationId.Text.Trim(), "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
             else if (!_isRunning)
-                SetStatus("เลือก Apple Music แล้ว; ใส่ Application ID เพื่อเริ่มแชร์");
+                SetStatus("เลือกบริการเพลงแล้ว; ใส่ Application ID เพื่อเริ่มแชร์");
         }
         catch (Exception ex)
         {
@@ -546,14 +588,14 @@ internal sealed class PresenceWindow : Form
         _isPolling = true;
         try
         {
-            var track = await _sessionReader.ReadCurrentTrackAsync();
+            var track = await _sessionReader.ReadCurrentTrackAsync(_showAppleMusic.Checked, _showSpotify.Checked);
             if (!_isRunning) return;
 
             if (track is null)
             {
                 await ClearIfNeededAsync();
-                SetStatus("ยังไม่พบเพลงจาก Apple Music");
-                _track.Text = "เปิด Apple Music และเริ่มเล่นเพลงบนเครื่องนี้";
+                SetStatus("ยังไม่พบเพลงจากบริการที่เลือก");
+                _track.Text = "เปิด Apple Music หรือ Spotify แล้วเริ่มเล่นเพลงบนเครื่องนี้";
                 return;
             }
 
@@ -561,11 +603,11 @@ internal sealed class PresenceWindow : Form
             if (!track.IsPlaying)
             {
                 await ClearIfNeededAsync();
-                SetStatus("Apple Music หยุดหรือพักเพลงอยู่");
+                SetStatus($"{track.ServiceName} หยุดหรือพักเพลงอยู่");
                 return;
             }
 
-            var key = $"{track.Title}\u001f{track.Artist}";
+            var key = $"{track.ServiceName}\u001f{track.Title}\u001f{track.Artist}";
             if (key != _lastTrackKey || !_discord.IsConnected)
             {
                 var artwork = await _artworkLookup.FindAsync(track.Title, track.Artist);
@@ -576,8 +618,8 @@ internal sealed class PresenceWindow : Form
                 _lastArtworkAvailable = artwork is not null;
             }
             SetStatus(!_lastArtworkAvailable
-                ? "กำลังแชร์เพลงไปยัง Discord (ไม่พบรูปปกในแคตตาล็อก)"
-                : "กำลังแชร์เพลงไปยัง Discord");
+                ? $"กำลังแชร์ {track.ServiceName} ไปยัง Discord (ไม่พบรูปปกในแคตตาล็อก)"
+                : $"กำลังแชร์ {track.ServiceName} ไปยัง Discord");
         }
         catch (Exception ex)
         {

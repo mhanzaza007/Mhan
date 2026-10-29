@@ -43,7 +43,7 @@ internal sealed class GitHubUpdateSettingsDialog : Form
 
         var description = new Label
         {
-            Text = "Mhan ต้องใช้ GitHub token แบบอ่านอย่างเดียวเพื่อดาวน์โหลด Release จาก repository ส่วนตัวของคุณ\nสร้าง token แบบ Fine-grained แล้วกำหนดให้เข้าถึงเฉพาะ Mhan และ Contents: Read-only",
+            Text = "Repository ของ Mhan เป็นสาธารณะ จึงตรวจและดาวน์โหลดอัปเดตได้โดยไม่ต้องใช้ token\nถ้าเปลี่ยนเป็นส่วนตัว ค่อยใส่ Fine-grained token ที่อ่าน Contents ของ Mhan ได้",
             Location = new Point(20, 88),
             Size = new Size(520, 48),
             ForeColor = Color.FromArgb(84, 72, 66)
@@ -61,7 +61,7 @@ internal sealed class GitHubUpdateSettingsDialog : Form
 
         var scopeHelp = new Label
         {
-            Text = "ตั้งค่า Repository access เป็น Only select repositories → Mhan\nPermissions → Repository permissions → Contents: Read-only\nจากนั้นสร้าง token แล้ววางด้านล่าง (ไม่ต้องส่ง token ให้ใคร)",
+            Text = "ถ้าต้องใช้ token: Repository access → Only select repositories → Mhan\nPermissions → Repository permissions → Contents: Read-only\nToken จะถูกเข้ารหัสไว้ในบัญชี Windows นี้",
             Location = new Point(20, 171),
             Size = new Size(520, 58),
             ForeColor = Color.FromArgb(138, 120, 111)
@@ -82,8 +82,8 @@ internal sealed class GitHubUpdateSettingsDialog : Form
         _token.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
         _status.Text = GitHubTokenStore.Load() is null
-            ? "ยังไม่ได้ตั้งค่า token"
-            : "มี token ที่บันทึกแบบเข้ารหัสสำหรับบัญชี Windows นี้แล้ว";
+            ? "พร้อมตรวจอัปเดตโดยไม่ใช้ token"
+            : "มี token ที่บันทึกแบบเข้ารหัสไว้ (ไม่จำเป็นสำหรับ repository สาธารณะ)";
         _status.SetBounds(20, 304, 520, 22);
         _status.AutoEllipsis = true;
         _status.ForeColor = Color.FromArgb(138, 120, 111);
@@ -94,13 +94,13 @@ internal sealed class GitHubUpdateSettingsDialog : Form
         {
             GitHubTokenStore.Delete();
             _token.Clear();
-            TokenWasSaved = false;
-            _status.Text = "ลบ token แล้ว; Mhan จะไม่ตรวจอัปเดตอัตโนมัติ";
+            TokenWasSaved = true;
+            _status.Text = "ลบ token แล้ว; Mhan จะตรวจอัปเดตแบบไม่ใช้ token";
         };
 
         var cancel = new Button { Text = "ปิด", Location = new Point(350, 350), Size = new Size(80, 36), DialogResult = DialogResult.Cancel };
         StyleButton(cancel, Color.FromArgb(244, 235, 226), Color.FromArgb(86, 70, 64));
-        _save.Text = "ตรวจสอบและบันทึก";
+        _save.Text = "ตรวจสอบ";
         _save.SetBounds(440, 350, 100, 36);
         StyleButton(_save, Color.FromArgb(132, 153, 111), Color.White);
         _save.Click += async (_, _) => await ValidateAndSaveAsync();
@@ -127,20 +127,20 @@ internal sealed class GitHubUpdateSettingsDialog : Form
     {
         var token = _token.Text.Trim();
         if (string.IsNullOrWhiteSpace(token))
-        {
-            _status.Text = "วาง token ก่อนกดตรวจสอบและบันทึก";
-            return;
-        }
+            token = GitHubTokenStore.Load() ?? "";
 
         _save.Enabled = false;
-        _status.Text = "กำลังตรวจสอบสิทธิ์กับ GitHub...";
+        _status.Text = "กำลังตรวจสอบ GitHub Release ล่าสุด...";
         try
         {
-            await new GitHubReleaseUpdater().ValidateTokenAsync(token, CancellationToken.None);
-            GitHubTokenStore.Save(token);
+            await new GitHubReleaseUpdater().ValidateAccessAsync(token, CancellationToken.None);
+            if (!string.IsNullOrWhiteSpace(_token.Text))
+                GitHubTokenStore.Save(token);
             _token.Clear();
             TokenWasSaved = true;
-            _status.Text = "ตรวจสอบสำเร็จ บันทึก token แบบเข้ารหัสแล้ว; Mhan จะตรวจเมื่อเปิดโปรแกรม";
+            _status.Text = string.IsNullOrWhiteSpace(token)
+                ? "ตรวจสอบสำเร็จ; Mhan จะตรวจอัปเดตเมื่อเปิดโปรแกรม"
+                : "ตรวจสอบสำเร็จ บันทึก token แบบเข้ารหัสแล้ว; Mhan จะตรวจเมื่อเปิดโปรแกรม";
         }
         catch (Exception ex)
         {

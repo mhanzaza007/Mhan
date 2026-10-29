@@ -54,7 +54,7 @@ internal sealed class DiscordIpcClient : IAsyncDisposable
         var activity = new
         {
             type = 2,
-            name = "Apple Music",
+            name = track.ServiceName,
             details = track.Title,
             state = track.Artist,
             assets = track.ArtworkUrl is null ? null : new

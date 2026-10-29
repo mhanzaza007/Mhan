@@ -38,7 +38,7 @@ Use the **Apple Music** and **Spotify** checkboxes in the main window to choose 
 
 ## Automatic updates
 
-Mhan checks the latest public GitHub Release before starting music sharing and every six hours while it is running. If a newer `Mhan.exe` is available, Mhan verifies its SHA-256 digest, installs it into a folder named for the new release, updates the Windows startup path, and restarts. After the new copy starts successfully, Mhan removes the old executable and its empty version folder. If installation fails, it restores and reopens the previous copy. Only a published Release updates the app; pushing source code alone does not.
+Mhan checks the latest public GitHub Release before starting music sharing and every six hours while it is running. If a newer `Mhan.exe` is available, Mhan verifies its SHA-256 digest, installs it into a folder named for the new release, updates the Windows startup path, and restarts. After the new copy starts successfully, Mhan removes the old executable and its empty version folder. If installation fails, it restores and reopens the previous copy. Mhan will not replace an installed version with an older release. Only a published Release updates the app; pushing source code alone does not.
 
 Automatic updates work without a GitHub token because the Mhan repository is public. The **Automatic updates** settings can check access and optionally store a fine-grained read-only token if the repository becomes private. Any token is encrypted for your Windows user with DPAPI.
 
@@ -96,7 +96,7 @@ Application ID เป็นเพียงหมายเลขระบุแ�
 
 ## การอัปเดตอัตโนมัติ
 
-Mhan ตรวจ GitHub Release ล่าสุดก่อนเริ่มแชร์เพลง และทุก 6 ชั่วโมงขณะเปิดโปรแกรม หากมี `Mhan.exe` รุ่นใหม่ โปรแกรมจะตรวจ SHA-256 ติดตั้งไว้ในโฟลเดอร์ตามชื่อรุ่นใหม่ อัปเดตตำแหน่งเปิดพร้อม Windows แล้วเปิดโปรแกรมใหม่ เมื่อรุ่นใหม่เปิดได้แล้วจะลบไฟล์และโฟลเดอร์ว่างของรุ่นเก่า หากติดตั้งไม่สำเร็จ โปรแกรมจะคืนไฟล์เดิมและเปิดรุ่นก่อนหน้า การอัปเดตเกิดเมื่อเผยแพร่ Release แล้วเท่านั้น การอัปโหลดซอร์สโค้ดอย่างเดียวยังไม่อัปเดตโปรแกรม
+Mhan ตรวจ GitHub Release ล่าสุดก่อนเริ่มแชร์เพลง และทุก 6 ชั่วโมงขณะเปิดโปรแกรม หากมี `Mhan.exe` รุ่นใหม่ โปรแกรมจะตรวจ SHA-256 ติดตั้งไว้ในโฟลเดอร์ตามชื่อรุ่นใหม่ อัปเดตตำแหน่งเปิดพร้อม Windows แล้วเปิดโปรแกรมใหม่ เมื่อรุ่นใหม่เปิดได้แล้วจะลบไฟล์และโฟลเดอร์ว่างของรุ่นเก่า หากติดตั้งไม่สำเร็จ โปรแกรมจะคืนไฟล์เดิมและเปิดรุ่นก่อนหน้า และจะไม่แทนที่รุ่นที่ติดตั้งด้วย Release ที่เก่ากว่า การอัปเดตเกิดเมื่อเผยแพร่ Release แล้วเท่านั้น การอัปโหลดซอร์สโค้ดอย่างเดียวยังไม่อัปเดตโปรแกรม
 
 ระบบอัปเดตทำงานได้โดยไม่ต้องใช้ GitHub token เพราะ repository ของ Mhan เป็นสาธารณะ ในหน้า **ตั้งค่าอัปเดตอัตโนมัติ** สามารถตรวจการเชื่อมต่อ และใส่ fine-grained token แบบอ่านอย่างเดียวได้หากเปลี่ยน repository เป็นส่วนตัว token จะถูกเข้ารหัสด้วย DPAPI สำหรับบัญชี Windows นี้
 

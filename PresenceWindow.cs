@@ -65,13 +65,18 @@ internal sealed class PresenceWindow : Form
                 Hide();
             }
 
+            if (StartupManager.IsEnabled())
+                StartupManager.EnsureCurrentExecutableIsRegistered();
+
+            if (!_updateRestarting)
+                await CheckForUpdatesAsync();
+            if (_updateRestarting || _exitRequested) return;
+
             if (startInBackground && (savedSettings.ShowAppleMusic || savedSettings.ShowSpotify)
                 && Regex.IsMatch(savedSettings.DiscordApplicationId, "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
             else if (startInBackground && !savedSettings.ShowAppleMusic && !savedSettings.ShowSpotify)
                 SetStatus("ปิดแหล่งเพลงที่จะแสดงไว้");
-            if (!_updateRestarting)
-                await CheckForUpdatesAsync();
         };
     }
 
@@ -643,7 +648,6 @@ internal sealed class PresenceWindow : Form
     {
         if (_isCheckingForUpdates || _exitRequested) return;
         var token = GitHubTokenStore.Load();
-        if (string.IsNullOrWhiteSpace(token)) return;
 
         _isCheckingForUpdates = true;
         try
@@ -654,7 +658,7 @@ internal sealed class PresenceWindow : Form
             SetStatus($"กำลังติดตั้งอัปเดต {update.Tag}...");
             await StopPresenceAsync();
             var restartInBackground = _startInBackground || !Visible || WindowState == FormWindowState.Minimized;
-            GitHubUpdateInstaller.ApplyAfterExit(update.Path, restartInBackground);
+            GitHubUpdateInstaller.ApplyAfterExit(update.Path, update.Tag, restartInBackground);
             _updateRestarting = true;
             _exitRequested = true;
             _trayIcon.Visible = false;

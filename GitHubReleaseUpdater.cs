@@ -8,15 +8,15 @@ namespace AppleMusicDiscordPresence;
 internal sealed record DownloadedMhanUpdate(string Tag, string Path);
 
 /// <summary>
-/// Checks and downloads the single latest Mhan.exe from the private GitHub release.
-/// The fine-grained token only needs Contents: read on mhanzaza007/Mhan.
+/// Checks and downloads the single latest Mhan.exe from the public GitHub release.
+/// Authentication is optional so the updater also works if the repository becomes private.
 /// </summary>
 internal sealed class GitHubReleaseUpdater
 {
     private const string LatestReleaseUrl = "https://api.github.com/repos/mhanzaza007/Mhan/releases/latest";
     private static readonly HttpClient Client = new() { Timeout = TimeSpan.FromMinutes(5) };
 
-    public async Task ValidateTokenAsync(string token, CancellationToken cancellationToken)
+    public async Task ValidateAccessAsync(string? token, CancellationToken cancellationToken)
     {
         var release = await GetLatestReleaseAsync(token, cancellationToken);
         if (release.AssetUrl is null)
@@ -25,11 +25,13 @@ internal sealed class GitHubReleaseUpdater
             throw new InvalidOperationException("GitHub Release ไม่มี SHA-256 digest สำหรับตรวจสอบไฟล์อัปเดต");
     }
 
-    public async Task<DownloadedMhanUpdate?> DownloadIfNewerAsync(string token, CancellationToken cancellationToken)
+    public async Task<DownloadedMhanUpdate?> DownloadIfNewerAsync(string? token, CancellationToken cancellationToken)
     {
         var release = await GetLatestReleaseAsync(token, cancellationToken);
         if (release.AssetUrl is null || release.Sha256 is null)
             throw new InvalidOperationException("GitHub Release ล่าสุดไม่มีไฟล์ Mhan.exe หรือ SHA-256 สำหรับตรวจสอบ");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(release.Tag, @"^v\d+\.\d+\.\d+$"))
+            throw new InvalidDataException("ชื่อ tag ของ GitHub Release ไม่อยู่ในรูปแบบ v1.2.3");
 
         var executablePath = Environment.ProcessPath
             ?? throw new InvalidOperationException("ไม่พบตำแหน่งไฟล์ Mhan.exe ปัจจุบัน");
@@ -44,7 +46,7 @@ internal sealed class GitHubReleaseUpdater
         {
             using var request = CreateRequest(HttpMethod.Get, release.AssetUrl, token, "application/octet-stream");
             using var response = await Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            await EnsureSuccessAsync(response, cancellationToken);
+            await EnsureSuccessAsync(response, cancellationToken, string.IsNullOrWhiteSpace(token));
 
             if (response.Content.Headers.ContentLength is > 1024L * 1024 * 1024)
                 throw new InvalidOperationException("ไฟล์อัปเดตมีขนาดใหญ่ผิดปกติ");
@@ -75,11 +77,11 @@ internal sealed class GitHubReleaseUpdater
     }
 
     private static async Task<(string Tag, string? AssetUrl, string? Sha256)> GetLatestReleaseAsync(
-        string token, CancellationToken cancellationToken)
+        string? token, CancellationToken cancellationToken)
     {
         using var request = CreateRequest(HttpMethod.Get, LatestReleaseUrl, token, "application/vnd.github+json");
         using var response = await Client.SendAsync(request, cancellationToken);
-        await EnsureSuccessAsync(response, cancellationToken);
+        await EnsureSuccessAsync(response, cancellationToken, string.IsNullOrWhiteSpace(token));
 
         await using var content = await response.Content.ReadAsStreamAsync(cancellationToken);
         using var document = await JsonDocument.ParseAsync(content, cancellationToken: cancellationToken);
@@ -100,23 +102,27 @@ internal sealed class GitHubReleaseUpdater
         return (tag, null, null);
     }
 
-    private static HttpRequestMessage CreateRequest(HttpMethod method, string url, string token, string accept)
+    private static HttpRequestMessage CreateRequest(HttpMethod method, string url, string? token, string accept)
     {
         var request = new HttpRequestMessage(method, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        if (!string.IsNullOrWhiteSpace(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Accept.ParseAdd(accept);
-        request.Headers.UserAgent.ParseAdd("Mhan/1.1");
+        request.Headers.UserAgent.ParseAdd("Mhan/1.4");
         request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
         return request;
     }
 
-    private static async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    private static async Task EnsureSuccessAsync(
+        HttpResponseMessage response, CancellationToken cancellationToken, bool anonymousRequest = false)
     {
         if (response.IsSuccessStatusCode) return;
         if (response.StatusCode == HttpStatusCode.Unauthorized)
             throw new InvalidOperationException("GitHub token ไม่ถูกต้องหรือหมดอายุ");
         if (response.StatusCode == HttpStatusCode.NotFound)
-            throw new InvalidOperationException("token นี้อ่าน Release ส่วนตัวของ Mhan ไม่ได้ ตรวจสิทธิ์ Contents: read และเลือก repo Mhan");
+            throw new InvalidOperationException(anonymousRequest
+                ? "ไม่พบ GitHub Release; ตรวจว่า repository เป็น Public และมี Release ล่าสุดพร้อมไฟล์ Mhan.exe"
+                : "token นี้อ่าน Release ของ Mhan ไม่ได้ ตรวจสิทธิ์ Contents: read และเลือก repository Mhan");
 
         var details = await response.Content.ReadAsStringAsync(cancellationToken);
         throw new HttpRequestException($"GitHub ตอบกลับ {(int)response.StatusCode}: {details}", null, response.StatusCode);

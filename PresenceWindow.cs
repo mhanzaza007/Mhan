@@ -87,9 +87,9 @@ internal sealed class PresenceWindow : Form
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 112));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 138));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));

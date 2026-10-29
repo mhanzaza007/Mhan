@@ -34,9 +34,11 @@ After sharing starts, Mhan saves your Application ID and enables startup with Wi
 - **No album artwork:** Artwork is looked up by matching the song against Apple's iTunes catalog. Some tracks may not have a match; the activity can still show the title and artist without artwork.
 - **Mhan cannot connect:** Make sure Discord Desktop is running. The browser version of Discord is not enough for local Rich Presence.
 
-## Updates
+## Automatic updates
 
-Mhan does not currently update itself. To install an update, exit Mhan from its tray icon, download the newest `Mhan.exe` from [Releases](https://github.com/mhanzaza007/Mhan/releases/latest), and replace the existing `Mhan.exe` in the same folder. Then open that file again. Replacing it in place keeps the Windows startup shortcut pointed at the correct file; older builds do not need to be kept. Changes pushed to the GitHub source do not update copies already on users' PCs; a new release must be published and downloaded.
+Mhan checks the latest GitHub Release when it starts and every six hours while it is running. If a newer `Mhan.exe` is available, Mhan verifies its SHA-256 digest, replaces the executable in the same folder, and restarts. Windows startup continues to point to the same file. Only a published Release updates the app; pushing source code alone does not.
+
+Because the repository is private, automatic updates need a GitHub fine-grained personal access token. In Mhan, select **Set up automatic updates**, then create a token with **Only select repositories → Mhan** and **Repository permissions → Contents: Read-only**. Paste it into Mhan to verify and save it. Mhan encrypts the token for your Windows user with DPAPI and uses it only to read the private Release. You can remove it from the same settings window. If you do not configure a token, music sharing still works, but automatic updates stay off.
 
 ## Build from source
 
@@ -48,7 +50,7 @@ dotnet build .\Mhan.csproj -c Release
 
 ## Privacy
 
-While sharing is active, Mhan reads the current track title, artist, and playback state from the Windows media session and sends the track and artist to Discord as Rich Presence. It queries Apple's iTunes catalog to find artwork. Mhan does not collect or transmit account passwords or tokens.
+While sharing is active, Mhan reads the current track title, artist, and playback state from the Windows media session and sends the track and artist to Discord as Rich Presence. It queries Apple's iTunes catalog to find artwork. If automatic updates are enabled, Mhan stores the GitHub read-only token encrypted for the current Windows account and sends it only to GitHub's API to check and download Releases. Mhan does not collect or transmit account passwords, Discord credentials, or Apple ID credentials.
 
 ---
 
@@ -88,9 +90,11 @@ Application ID เป็นเพียงหมายเลขระบุแ�
 - **ไม่มีรูปปก:** โปรแกรมค้นหารูปจากแคตตาล็อก iTunes ของ Apple บางเพลงอาจค้นไม่พบ แต่ยังแสดงชื่อเพลงและศิลปินได้
 - **Mhan เชื่อมต่อไม่ได้:** เปิด Discord Desktop ค้างไว้ Discord เวอร์ชันเว็บอย่างเดียวไม่รองรับการเชื่อมต่อ Rich Presence ในเครื่อง
 
-## การอัปเดต
+## การอัปเดตอัตโนมัติ
 
-ขณะนี้ Mhan ยังอัปเดตตัวเองไม่ได้ หากต้องการอัปเดต ให้คลิกขวาไอคอน Mhan แล้วออกจากโปรแกรม ดาวน์โหลด `Mhan.exe` รุ่นล่าสุดจากหน้า [Releases](https://github.com/mhanzaza007/Mhan/releases/latest) แล้วนำไปแทน `Mhan.exe` ตัวเดิมในโฟลเดอร์เดิม จากนั้นเปิดไฟล์นั้นอีกครั้ง การแทนไฟล์ในตำแหน่งเดิมจะทำให้การเปิดพร้อม Windows ยังชี้ถูกไฟล์ และไม่ต้องเก็บ build รุ่นเก่าไว้ การอัปเดตซอร์สโค้ดบน GitHub อย่างเดียวจะไม่เปลี่ยนโปรแกรมในเครื่อง ต้องเผยแพร่ Release รุ่นใหม่และดาวน์โหลดมาติดตั้ง
+Mhan ตรวจสอบ GitHub Release ล่าสุดตอนเปิดโปรแกรมและทุก 6 ชั่วโมงระหว่างทำงาน หากมี `Mhan.exe` รุ่นใหม่ โปรแกรมจะตรวจสอบ SHA-256 แทนไฟล์เดิมในโฟลเดอร์เดิม แล้วเปิดใหม่ การเปิดพร้อม Windows ยังชี้ไปยังไฟล์เดิม การอัปเดตจะเกิดเมื่อมีการเผยแพร่ Release แล้วเท่านั้น การอัปโหลดซอร์สโค้ดอย่างเดียวยังไม่อัปเดตโปรแกรม
+
+เนื่องจาก repository เป็น private จึงต้องใช้ GitHub fine-grained personal access token ใน Mhan คลิก **ตั้งค่าอัปเดตอัตโนมัติ** แล้วสร้าง token โดยเลือก **Only select repositories → Mhan** และ **Repository permissions → Contents: Read-only** นำ token มาวางใน Mhan เพื่อให้ตรวจสอบและบันทึก โปรแกรมเข้ารหัส token ด้วย DPAPI สำหรับบัญชี Windows ปัจจุบัน และใช้ token เพื่ออ่าน Release ส่วนตัวเท่านั้น ลบ token ได้จากหน้าตั้งค่าเดียวกัน หากไม่ตั้งค่า token การแชร์เพลงยังทำงานได้ แต่จะไม่ตรวจอัปเดตอัตโนมัติ
 
 ## Build จากซอร์สโค้ด
 
@@ -102,5 +106,5 @@ dotnet build .\Mhan.csproj -c Release
 
 ## ความเป็นส่วนตัว
 
-ระหว่างเปิดแชร์ Mhan จะอ่านชื่อเพลง ศิลปิน และสถานะการเล่นจาก Windows media session แล้วส่งชื่อเพลงและศิลปินไปยัง Discord เพื่อแสดง Rich Presence นอกจากนี้ยังค้นหารูปปกจากแคตตาล็อก iTunes ของ Apple โปรแกรมไม่เก็บหรือส่งรหัสผ่านหรือโทเคนบัญชี
+ระหว่างเปิดแชร์ Mhan จะอ่านชื่อเพลง ศิลปิน และสถานะการเล่นจาก Windows media session แล้วส่งชื่อเพลงและศิลปินไปยัง Discord เพื่อแสดง Rich Presence นอกจากนี้ยังค้นหารูปปกจากแคตตาล็อก iTunes ของ Apple หากเปิดใช้การอัปเดตอัตโนมัติ Mhan จะเก็บ GitHub read-only token แบบเข้ารหัสสำหรับบัญชี Windows ปัจจุบัน และส่ง token ไปยัง GitHub API เพื่อเช็กและดาวน์โหลด Release เท่านั้น โปรแกรมไม่เก็บหรือส่งรหัสผ่านบัญชี Discord หรือ Apple ID
 

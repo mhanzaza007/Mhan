@@ -5,6 +5,7 @@ namespace AppleMusicDiscordPresence;
 internal sealed class AppSettings
 {
     public string DiscordApplicationId { get; set; } = "";
+    public bool ShowAppleMusic { get; set; } = true;
     public string EncryptedGitHubToken { get; set; } = "";
 }
 

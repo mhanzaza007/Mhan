@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -32,6 +33,12 @@ internal sealed class GitHubReleaseUpdater
             throw new InvalidOperationException("GitHub Release ล่าสุดไม่มีไฟล์ Mhan.exe หรือ SHA-256 สำหรับตรวจสอบ");
         if (!System.Text.RegularExpressions.Regex.IsMatch(release.Tag, @"^v\d+\.\d+\.\d+$"))
             throw new InvalidDataException("ชื่อ tag ของ GitHub Release ไม่อยู่ในรูปแบบ v1.2.3");
+        if (!Version.TryParse(release.Tag[1..], out var releaseVersion))
+            throw new InvalidDataException("ไม่สามารถอ่านหมายเลขเวอร์ชันจาก GitHub Release ได้");
+
+        var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
+        if (currentVersion is not null && NormalizeVersion(releaseVersion) < NormalizeVersion(currentVersion))
+            return null;
 
         var executablePath = Environment.ProcessPath
             ?? throw new InvalidOperationException("ไม่พบตำแหน่งไฟล์ Mhan.exe ปัจจุบัน");
@@ -132,5 +139,11 @@ internal sealed class GitHubReleaseUpdater
         element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString() ?? ""
             : "";
+
+    private static Version NormalizeVersion(Version version) => new(
+        version.Major,
+        Math.Max(version.Minor, 0),
+        Math.Max(version.Build, 0),
+        Math.Max(version.Revision, 0));
 }
 

@@ -85,7 +85,7 @@ internal sealed class PresenceWindow : Form
             RowCount = 9
         };
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 128));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
@@ -105,7 +105,7 @@ internal sealed class PresenceWindow : Form
             ForeColor = Color.FromArgb(103, 130, 82),
             BackColor = Color.FromArgb(231, 239, 219),
             Dock = DockStyle.Fill,
-            Margin = Padding.Empty
+            Margin = new Padding(0, 6, 0, 6)
         };
         RoundControl(musicMark, 12);
         var headerText = new TableLayoutPanel
@@ -117,15 +117,15 @@ internal sealed class PresenceWindow : Form
             Margin = new Padding(14, 0, 0, 0)
         };
         headerText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        headerText.RowStyles.Add(new RowStyle(SizeType.Percent, 58));
-        headerText.RowStyles.Add(new RowStyle(SizeType.Percent, 42));
+        headerText.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        headerText.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var brand = new Label
         {
             Text = "Mhan",
             Dock = DockStyle.Fill,
             ForeColor = Color.FromArgb(74, 61, 57),
             Font = new Font("Segoe UI", 19F, FontStyle.Bold),
-            TextAlign = ContentAlignment.BottomLeft,
+            TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty
         };
         var subtitle = new Label
@@ -134,7 +134,7 @@ internal sealed class PresenceWindow : Form
             Dock = DockStyle.Fill,
             ForeColor = Color.FromArgb(132, 139, 111),
             Font = new Font("Segoe UI", 9.5F),
-            TextAlign = ContentAlignment.TopLeft,
+            TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty
         };
         headerText.Controls.Add(brand, 0, 0);

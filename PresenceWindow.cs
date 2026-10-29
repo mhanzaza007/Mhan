@@ -6,6 +6,7 @@ namespace AppleMusicDiscordPresence;
 internal sealed class PresenceWindow : Form
 {
     private readonly TextBox _applicationId = new();
+    private readonly CheckBox _showAppleMusic = new();
     private readonly Label _status = new();
     private readonly Label _track = new();
     private readonly Button _startButton = new();
@@ -32,8 +33,8 @@ internal sealed class PresenceWindow : Form
         _startInBackground = startInBackground;
         Text = "Mhan";
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(510, 315);
-        MinimumSize = new Size(526, 355);
+        ClientSize = new Size(510, 357);
+        MinimumSize = new Size(526, 397);
         Font = new Font("Segoe UI", 10F);
         _appIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         Icon = _appIcon;
@@ -41,8 +42,10 @@ internal sealed class PresenceWindow : Form
         BuildInterface();
         ConfigureTrayIcon();
 
-        var savedApplicationId = SettingsStore.Load().DiscordApplicationId;
-        _applicationId.Text = savedApplicationId;
+        var savedSettings = SettingsStore.Load();
+        _applicationId.Text = savedSettings.DiscordApplicationId;
+        _showAppleMusic.Checked = savedSettings.ShowAppleMusic;
+        _showAppleMusic.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
         _pollTimer.Tick += async (_, _) => await PollAsync();
         _updateTimer.Tick += async (_, _) => await CheckForUpdatesAsync();
         _updateTimer.Start();
@@ -57,8 +60,10 @@ internal sealed class PresenceWindow : Form
                 Hide();
             }
 
-            if (startInBackground && Regex.IsMatch(savedApplicationId, "^[0-9]{17,20}$"))
+            if (startInBackground && savedSettings.ShowAppleMusic && Regex.IsMatch(savedSettings.DiscordApplicationId, "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
+            else if (startInBackground && !savedSettings.ShowAppleMusic)
+                SetStatus("ปิดการแสดง Apple Music ไว้");
             if (!_updateRestarting)
                 await CheckForUpdatesAsync();
         };
@@ -81,31 +86,41 @@ internal sealed class PresenceWindow : Form
             Location = new Point(22, 53)
         };
 
-        var idLabel = new Label { Text = "Discord Application ID", AutoSize = true, Location = new Point(22, 112) };
-        _applicationId.SetBounds(22, 137, 455, 30);
+        var selectionLabel = new Label
+        {
+            Text = "เลือกสิ่งที่จะแสดงใน Discord",
+            AutoSize = true,
+            Font = new Font(Font, FontStyle.Bold),
+            Location = new Point(22, 105)
+        };
+        _showAppleMusic.Text = "Apple Music";
+        _showAppleMusic.SetBounds(22, 127, 180, 28);
+
+        var idLabel = new Label { Text = "Discord Application ID", AutoSize = true, Location = new Point(22, 162) };
+        _applicationId.SetBounds(22, 186, 455, 30);
         _applicationId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
         var developerLink = new LinkLabel
         {
             Text = "เปิด Discord Developer Portal เพื่อสร้างแอป",
             AutoSize = true,
-            Location = new Point(22, 174)
+            Location = new Point(22, 221)
         };
         developerLink.LinkClicked += (_, _) => OpenDeveloperPortal();
 
         _startButton.Text = "บันทึกและเริ่มแชร์";
-        _startButton.SetBounds(22, 207, 150, 36);
+        _startButton.SetBounds(22, 251, 150, 36);
         _startButton.Click += async (_, _) => await StartPresenceAsync();
 
         _stopButton.Text = "หยุดแชร์";
-        _stopButton.SetBounds(182, 207, 100, 36);
+        _stopButton.SetBounds(182, 251, 100, 36);
         _stopButton.Enabled = false;
         _stopButton.Click += async (_, _) => await StopPresenceAsync();
 
         var updatesButton = new Button
         {
             Text = "ตั้งค่าอัปเดตอัตโนมัติ",
-            Location = new Point(295, 207),
+            Location = new Point(295, 251),
             Size = new Size(182, 36),
             Anchor = AnchorStyles.Top | AnchorStyles.Right
         };
@@ -113,15 +128,15 @@ internal sealed class PresenceWindow : Form
 
         _status.Text = "สถานะ: ยังไม่เริ่ม";
         _status.AutoSize = true;
-        _status.Location = new Point(22, 255);
+        _status.Location = new Point(22, 299);
 
         _track.Text = "";
         _track.AutoSize = false;
         _track.AutoEllipsis = true;
-        _track.SetBounds(22, 275, 455, 24);
+        _track.SetBounds(22, 321, 455, 24);
         _track.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-        Controls.AddRange([heading, intro, idLabel, _applicationId, developerLink, _startButton, _stopButton, updatesButton, _status, _track]);
+        Controls.AddRange([heading, intro, selectionLabel, _showAppleMusic, idLabel, _applicationId, developerLink, _startButton, _stopButton, updatesButton, _status, _track]);
     }
 
     private void ConfigureTrayIcon()
@@ -164,6 +179,12 @@ internal sealed class PresenceWindow : Form
 
     private async Task StartPresenceAsync()
     {
+        if (!_showAppleMusic.Checked)
+        {
+            SetStatus("ติ๊ก Apple Music ก่อนเริ่มแชร์");
+            return;
+        }
+
         var applicationId = _applicationId.Text.Trim();
         if (!Regex.IsMatch(applicationId, "^[0-9]{17,20}$"))
         {
@@ -192,6 +213,33 @@ internal sealed class PresenceWindow : Form
         {
             await StopPresenceAsync();
             SetStatus($"เริ่มไม่ได้: {ShortError(ex)}");
+        }
+    }
+
+    private async Task OnDisplaySelectionChangedAsync()
+    {
+        try
+        {
+            var settings = SettingsStore.Load();
+            settings.DiscordApplicationId = _applicationId.Text.Trim();
+            settings.ShowAppleMusic = _showAppleMusic.Checked;
+            SettingsStore.Save(settings);
+
+            if (!_showAppleMusic.Checked)
+            {
+                if (_isRunning) await StopPresenceAsync();
+                else SetStatus("ปิดการแสดง Apple Music ไว้");
+                return;
+            }
+
+            if (!_isRunning && Regex.IsMatch(_applicationId.Text.Trim(), "^[0-9]{17,20}$"))
+                await StartPresenceAsync();
+            else if (!_isRunning)
+                SetStatus("เลือก Apple Music แล้ว; ใส่ Application ID เพื่อเริ่มแชร์");
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"บันทึกตัวเลือกไม่ได้: {ShortError(ex)}");
         }
     }
 

@@ -28,5 +28,17 @@ internal static class StartupManager
             ?? throw new InvalidOperationException("Could not find the Mhan executable path.");
         runKey.SetValue(ValueName, $"\"{executablePath}\" --background", RegistryValueKind.String);
     }
+
+    public static void EnsureCurrentExecutableIsRegistered()
+    {
+        using var runKey = Registry.CurrentUser.OpenSubKey(RunKeyPath, writable: true);
+        if (runKey?.GetValue(ValueName) is not string currentValue) return;
+
+        var executablePath = Environment.ProcessPath
+            ?? throw new InvalidOperationException("Could not find the Mhan executable path.");
+        var expectedValue = $"\"{executablePath}\" --background";
+        if (!string.Equals(currentValue, expectedValue, StringComparison.OrdinalIgnoreCase))
+            runKey.SetValue(ValueName, expectedValue, RegistryValueKind.String);
+    }
 }
 

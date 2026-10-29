@@ -18,7 +18,7 @@ Download the latest Windows app from [GitHub Releases](https://github.com/mhanza
 2. Name the application `Mhan` and create it. You do not need to add a bot.
 3. Open **General Information** and copy the **Application ID**.
 4. In Discord, open **User Settings → Activity Privacy** and enable activity sharing.
-5. Open Apple Music and Discord Desktop. Start `Mhan.exe`, paste the Application ID, then select **Save and Start Sharing**.
+5. Open Apple Music and Discord Desktop. Start `Mhan.exe`, check **Apple Music** in the display list, paste the Application ID, then select **Save and Start Sharing**.
 6. Play a song in Apple Music. Your Discord profile should show **Apple Music**, the song title, and the artist.
 
 The Application ID is an identifier, not a password. Mhan does not ask for your Discord password, a bot token, or your Apple ID.
@@ -26,6 +26,8 @@ The Application ID is an identifier, not a password. Mhan does not ask for your 
 ## Tray icon and Windows startup
 
 After sharing starts, Mhan saves your Application ID and enables startup with Windows. Closing the window with **X** hides Mhan in the notification area beside the clock; it keeps running in the background. Double-click the Mhan tray icon to reopen the window. Right-click it to stop sharing, change the **Open when Windows starts** setting, or exit Mhan completely.
+
+Use the **Apple Music** checkbox in the main window to choose whether Apple Music appears on Discord. Unchecking it clears the activity; checking it again resumes sharing when the Application ID is set. Additional integrations can be added as selectable sources later.
 
 ## Troubleshooting
 
@@ -74,7 +76,7 @@ Mhan แสดงเพลงที่กำลังเล่นใน Apple Mu
 2. ตั้งชื่อแอปว่า `Mhan` แล้วสร้างแอป ไม่ต้องเพิ่มบอท
 3. เปิด **General Information** แล้วคัดลอก **Application ID**
 4. ใน Discord ไปที่ **การตั้งค่าผู้ใช้ → ความเป็นส่วนตัวของกิจกรรม (Activity Privacy)** แล้วเปิดการแชร์กิจกรรม
-5. เปิด Apple Music และ Discord Desktop จากนั้นเปิด `Mhan.exe` วาง Application ID แล้วกด **บันทึกและเริ่มแชร์**
+5. เปิด Apple Music และ Discord Desktop จากนั้นเปิด `Mhan.exe` ติ๊ก **Apple Music** ในรายการสิ่งที่จะแสดง วาง Application ID แล้วกด **บันทึกและเริ่มแชร์**
 6. เปิดเพลงใน Apple Music โปรไฟล์ Discord จะแสดง **Apple Music** พร้อมชื่อเพลงและศิลปิน
 
 Application ID เป็นเพียงหมายเลขระบุแอป ไม่ใช่รหัสผ่าน Mhan จะไม่ขอรหัสผ่าน Discord, Bot Token หรือ Apple ID
@@ -82,6 +84,8 @@ Application ID เป็นเพียงหมายเลขระบุแ�
 ## ไอคอนถาดระบบและการเปิดพร้อม Windows
 
 เมื่อเริ่มแชร์แล้ว Mhan จะบันทึก Application ID และตั้งให้เปิดพร้อม Windows หากกด **X** หน้าต่างจะซ่อนลงไปทำงานเบื้องหลังใกล้นาฬิกา ดับเบิลคลิกไอคอน Mhan เพื่อเปิดหน้าต่างอีกครั้ง คลิกขวาที่ไอคอนเพื่อหยุดแชร์ เปลี่ยนการตั้งค่า **เปิดเมื่อเข้า Windows** หรือออกจากโปรแกรม
+
+ใช้ช่องติ๊ก **Apple Music** ในหน้าหลักเพื่อเลือกว่าจะแสดงเพลง Apple Music บน Discord หรือไม่ เมื่อเอาติ๊กออก สถานะเพลงจะถูกล้างจาก Discord; เมื่อติ๊กกลับ โปรแกรมจะเริ่มแชร์อีกครั้งถ้ามี Application ID แล้ว และสามารถเพิ่มแหล่งอื่นเป็นตัวเลือกภายหลังได้
 
 ## แก้ปัญหาเบื้องต้น
 

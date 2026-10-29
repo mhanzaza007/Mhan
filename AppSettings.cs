@@ -6,6 +6,7 @@ internal sealed class AppSettings
 {
     public string DiscordApplicationId { get; set; } = "";
     public bool ShowAppleMusic { get; set; } = true;
+    public bool ShowSpotify { get; set; }
     public string EncryptedGitHubToken { get; set; } = "";
 }
 

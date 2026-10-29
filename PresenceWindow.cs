@@ -87,9 +87,9 @@ internal sealed class PresenceWindow : Form
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 138));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 128));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 158));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
@@ -159,15 +159,15 @@ internal sealed class PresenceWindow : Form
             Dock = DockStyle.Fill,
             ColumnCount = 3,
             RowCount = 3,
-            Padding = new Padding(18, 12, 18, 12),
+            Padding = new Padding(18, 8, 18, 8),
             BackColor = musicCard.BackColor,
             Margin = Padding.Empty
         };
         musicContent.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42));
         musicContent.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 126));
         musicContent.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+        musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var musicHeading = CreateSectionHeading("การแสดงผล");
         musicHeading.Dock = DockStyle.Fill;
@@ -223,17 +223,17 @@ internal sealed class PresenceWindow : Form
             Dock = DockStyle.Fill,
             ColumnCount = 1,
             RowCount = 7,
-            Padding = new Padding(18, 11, 18, 10),
+            Padding = new Padding(18, 8, 18, 8),
             BackColor = discordCard.BackColor,
             Margin = Padding.Empty
         };
         discordContent.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
-        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 3));
-        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
-        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 3));
+        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 23));
+        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 1));
+        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 19));
+        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 1));
         discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 5));
+        discordContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 2));
         discordContent.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         var discordHeading = CreateSectionHeading("เชื่อมต่อ Discord");
         discordHeading.Dock = DockStyle.Fill;

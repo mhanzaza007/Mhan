@@ -57,9 +57,10 @@ internal sealed class PresenceWindow : Form
                 Hide();
             }
 
-            await CheckForUpdatesAsync();
-            if (!_updateRestarting && startInBackground && Regex.IsMatch(savedApplicationId, "^[0-9]{17,20}$"))
+            if (startInBackground && Regex.IsMatch(savedApplicationId, "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
+            if (!_updateRestarting)
+                await CheckForUpdatesAsync();
         };
     }
 
@@ -289,7 +290,8 @@ internal sealed class PresenceWindow : Form
 
             SetStatus($"กำลังติดตั้งอัปเดต {update.Tag}...");
             await StopPresenceAsync();
-            GitHubUpdateInstaller.ApplyAfterExit(update.Path, _startInBackground);
+            var restartInBackground = _startInBackground || !Visible || WindowState == FormWindowState.Minimized;
+            GitHubUpdateInstaller.ApplyAfterExit(update.Path, restartInBackground);
             _updateRestarting = true;
             _exitRequested = true;
             _trayIcon.Visible = false;

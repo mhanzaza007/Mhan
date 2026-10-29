@@ -11,6 +11,7 @@ internal sealed class PresenceWindow : Form
     private readonly Button _startButton = new();
     private readonly Button _stopButton = new();
     private readonly System.Windows.Forms.Timer _pollTimer = new() { Interval = 2500 };
+    private readonly System.Windows.Forms.Timer _updateTimer = new() { Interval = 6 * 60 * 60 * 1000 };
     private readonly NotifyIcon _trayIcon = new();
     private readonly Icon _appIcon;
     private readonly AppleMusicSessionReader _sessionReader = new();
@@ -22,9 +23,13 @@ internal sealed class PresenceWindow : Form
     private bool _isRunning;
     private bool _lastArtworkAvailable;
     private bool _exitRequested;
+    private bool _isCheckingForUpdates;
+    private bool _updateRestarting;
+    private readonly bool _startInBackground;
 
     public PresenceWindow(bool startInBackground)
     {
+        _startInBackground = startInBackground;
         Text = "Mhan";
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(510, 315);
@@ -39,18 +44,23 @@ internal sealed class PresenceWindow : Form
         var savedApplicationId = SettingsStore.Load().DiscordApplicationId;
         _applicationId.Text = savedApplicationId;
         _pollTimer.Tick += async (_, _) => await PollAsync();
+        _updateTimer.Tick += async (_, _) => await CheckForUpdatesAsync();
+        _updateTimer.Start();
         FormClosing += OnFormClosing;
 
-        if (startInBackground && Regex.IsMatch(savedApplicationId, "^[0-9]{17,20}$"))
+        Shown += async (_, _) =>
         {
-            ShowInTaskbar = false;
-            WindowState = FormWindowState.Minimized;
-            Shown += async (_, _) =>
+            if (startInBackground)
             {
+                ShowInTaskbar = false;
+                WindowState = FormWindowState.Minimized;
                 Hide();
+            }
+
+            await CheckForUpdatesAsync();
+            if (!_updateRestarting && startInBackground && Regex.IsMatch(savedApplicationId, "^[0-9]{17,20}$"))
                 await StartPresenceAsync();
-            };
-        }
+        };
     }
 
     private void BuildInterface()
@@ -91,6 +101,15 @@ internal sealed class PresenceWindow : Form
         _stopButton.Enabled = false;
         _stopButton.Click += async (_, _) => await StopPresenceAsync();
 
+        var updatesButton = new Button
+        {
+            Text = "ตั้งค่าอัปเดตอัตโนมัติ",
+            Location = new Point(295, 207),
+            Size = new Size(182, 36),
+            Anchor = AnchorStyles.Top | AnchorStyles.Right
+        };
+        updatesButton.Click += (_, _) => ShowUpdateSettings();
+
         _status.Text = "สถานะ: ยังไม่เริ่ม";
         _status.AutoSize = true;
         _status.Location = new Point(22, 255);
@@ -101,7 +120,7 @@ internal sealed class PresenceWindow : Form
         _track.SetBounds(22, 275, 455, 24);
         _track.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-        Controls.AddRange([heading, intro, idLabel, _applicationId, developerLink, _startButton, _stopButton, _status, _track]);
+        Controls.AddRange([heading, intro, idLabel, _applicationId, developerLink, _startButton, _stopButton, updatesButton, _status, _track]);
     }
 
     private void ConfigureTrayIcon()
@@ -109,6 +128,7 @@ internal sealed class PresenceWindow : Form
         var menu = new ContextMenuStrip();
         menu.Items.Add("เปิดหน้าต่าง", null, (_, _) => ShowWindow());
         menu.Items.Add("หยุดแชร์", null, async (_, _) => await StopPresenceAsync());
+        menu.Items.Add("ตั้งค่าอัปเดตอัตโนมัติ", null, (_, _) => ShowUpdateSettings());
         menu.Items.Add(new ToolStripSeparator());
         _autoStartMenuItem = new ToolStripMenuItem("เปิดเมื่อเข้า Windows")
         {
@@ -152,7 +172,9 @@ internal sealed class PresenceWindow : Form
 
         try
         {
-            SettingsStore.Save(new AppSettings { DiscordApplicationId = applicationId });
+            var settings = SettingsStore.Load();
+            settings.DiscordApplicationId = applicationId;
+            SettingsStore.Save(settings);
             StartupManager.SetEnabled(true);
             if (_autoStartMenuItem is not null) _autoStartMenuItem.Checked = true;
             _isRunning = true;
@@ -245,6 +267,45 @@ internal sealed class PresenceWindow : Form
         }
     }
 
+    private void ShowUpdateSettings()
+    {
+        using var dialog = new GitHubUpdateSettingsDialog();
+        dialog.ShowDialog(this);
+        if (dialog.TokenWasSaved)
+            _ = CheckForUpdatesAsync();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_isCheckingForUpdates || _exitRequested) return;
+        var token = GitHubTokenStore.Load();
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        _isCheckingForUpdates = true;
+        try
+        {
+            var update = await new GitHubReleaseUpdater().DownloadIfNewerAsync(token, CancellationToken.None);
+            if (update is null) return;
+
+            SetStatus($"กำลังติดตั้งอัปเดต {update.Tag}...");
+            await StopPresenceAsync();
+            GitHubUpdateInstaller.ApplyAfterExit(update.Path, _startInBackground);
+            _updateRestarting = true;
+            _exitRequested = true;
+            _trayIcon.Visible = false;
+            await _discord.DisposeAsync();
+            Close();
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"ตรวจสอบอัปเดตไม่สำเร็จ: {ShortError(ex)}");
+        }
+        finally
+        {
+            _isCheckingForUpdates = false;
+        }
+    }
+
     private async Task ClearIfNeededAsync()
     {
         if (_lastTrackKey is null || !_discord.IsConnected) return;
@@ -294,6 +355,7 @@ internal sealed class PresenceWindow : Form
         if (disposing)
         {
             _pollTimer.Dispose();
+            _updateTimer.Dispose();
             _trayIcon.Dispose();
             _appIcon.Dispose();
             _ = _discord.DisposeAsync();

@@ -8,8 +8,10 @@ internal sealed record TrackInfo(
     bool IsPlaying,
     string ServiceName,
     string SourceId,
+    TimeSpan Position,
     string? ArtworkUrl = null,
-    string? TrackUrl = null);
+    string? TrackUrl = null,
+    string? PreviewLyric = null);
 
 internal sealed class AppleMusicSessionReader
 {
@@ -37,8 +39,9 @@ internal sealed class AppleMusicSessionReader
         var artist = string.IsNullOrWhiteSpace(properties.Artist) ? "Unknown artist" : properties.Artist.Trim();
         var isPlaying = session.GetPlaybackInfo().PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
         var serviceName = GetServiceName(session.SourceAppUserModelId) ?? "Music";
+        var position = session.GetTimelineProperties().Position;
 
-        return new TrackInfo(title, artist, isPlaying, serviceName, session.SourceAppUserModelId);
+        return new TrackInfo(title, artist, isPlaying, serviceName, session.SourceAppUserModelId, position);
     }
 
     private static string? GetServiceName(string sourceAppUserModelId)
@@ -53,4 +56,3 @@ internal sealed class AppleMusicSessionReader
         return null;
     }
 }
-

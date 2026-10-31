@@ -37,7 +37,7 @@ internal sealed class GitHubReleaseUpdater
             throw new InvalidDataException("ไม่สามารถอ่านหมายเลขเวอร์ชันจาก GitHub Release ได้");
 
         var currentVersion = Assembly.GetExecutingAssembly().GetName().Version;
-        if (currentVersion is not null && NormalizeVersion(releaseVersion) < NormalizeVersion(currentVersion))
+        if (currentVersion is not null && NormalizeVersion(releaseVersion) <= NormalizeVersion(currentVersion))
             return null;
 
         var executablePath = Environment.ProcessPath
@@ -115,7 +115,7 @@ internal sealed class GitHubReleaseUpdater
         if (!string.IsNullOrWhiteSpace(token))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Headers.Accept.ParseAdd(accept);
-        request.Headers.UserAgent.ParseAdd("Mhan/1.4");
+        request.Headers.UserAgent.ParseAdd("Mhan/1.6.0");
         request.Headers.TryAddWithoutValidation("X-GitHub-Api-Version", "2022-11-28");
         return request;
     }
@@ -146,4 +146,3 @@ internal sealed class GitHubReleaseUpdater
         Math.Max(version.Build, 0),
         Math.Max(version.Revision, 0));
 }
-

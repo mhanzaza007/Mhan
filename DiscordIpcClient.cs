@@ -8,6 +8,8 @@ namespace AppleMusicDiscordPresence;
 internal sealed class DiscordIpcClient : IAsyncDisposable
 {
     private NamedPipeClientStream? _pipe;
+    private string? _activeTrackKey;
+    private long? _activeStartTimestamp;
 
     public bool IsConnected => _pipe?.IsConnected == true;
 
@@ -56,7 +58,8 @@ internal sealed class DiscordIpcClient : IAsyncDisposable
             type = 2,
             name = track.ServiceName,
             details = track.Title,
-            state = track.Artist,
+            state = track.PreviewLyric ?? track.Artist,
+            timestamps = track.IsPlaying ? new { start = GetActivityStartTimestamp(track) } : null,
             assets = track.ArtworkUrl is null ? null : new
             {
                 large_image = track.ArtworkUrl,
@@ -67,8 +70,26 @@ internal sealed class DiscordIpcClient : IAsyncDisposable
         return SendActivityAsync(applicationId, activity, cancellationToken);
     }
 
-    public Task ClearActivityAsync(string applicationId, CancellationToken cancellationToken) =>
-        SendActivityAsync(applicationId, null, cancellationToken);
+    public Task ClearActivityAsync(string applicationId, CancellationToken cancellationToken)
+    {
+        _activeTrackKey = null;
+        _activeStartTimestamp = null;
+        return SendActivityAsync(applicationId, null, cancellationToken);
+    }
+
+    private long GetActivityStartTimestamp(TrackInfo track)
+    {
+        var trackKey = $"{track.ServiceName}\u001f{track.Title}\u001f{track.Artist}";
+        var positionSeconds = (long)Math.Clamp(Math.Floor(track.Position.TotalSeconds), 0, 86400);
+        var candidateStart = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - positionSeconds;
+        if (_activeTrackKey != trackKey || _activeStartTimestamp is null
+            || Math.Abs(candidateStart - _activeStartTimestamp.Value) > 3)
+        {
+            _activeTrackKey = trackKey;
+            _activeStartTimestamp = candidateStart;
+        }
+        return _activeStartTimestamp.Value;
+    }
 
     private async Task SendActivityAsync(string applicationId, object? activity, CancellationToken cancellationToken)
     {
@@ -131,4 +152,3 @@ internal sealed class DiscordIpcClient : IAsyncDisposable
 
     public ValueTask DisposeAsync() => new(DisposePipeAsync());
 }
-

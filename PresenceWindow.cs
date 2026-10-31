@@ -9,20 +9,24 @@ internal sealed class PresenceWindow : Form
     private readonly TextBox _applicationId = new();
     private readonly CheckBox _showAppleMusic = new();
     private readonly CheckBox _showSpotify = new();
+    private readonly CheckBox _showLyrics = new();
     private readonly Label _status = new();
     private readonly Label _track = new();
     private readonly Panel _statusDot = new();
     private readonly Button _startButton = new();
     private readonly Button _stopButton = new();
-    private readonly System.Windows.Forms.Timer _pollTimer = new() { Interval = 2500 };
+    private readonly System.Windows.Forms.Timer _pollTimer = new() { Interval = 1000 };
     private readonly System.Windows.Forms.Timer _updateTimer = new() { Interval = 6 * 60 * 60 * 1000 };
     private readonly NotifyIcon _trayIcon = new();
     private readonly Icon _appIcon;
     private readonly AppleMusicSessionReader _sessionReader = new();
     private readonly AppleMusicArtworkLookup _artworkLookup = new();
+    private readonly LyricsDisplay _lyricsDisplay = new();
     private readonly DiscordIpcClient _discord = new();
     private ToolStripMenuItem? _autoStartMenuItem;
     private string? _lastTrackKey;
+    private string? _lastLyric;
+    private AppleMusicArtwork? _currentArtwork;
     private bool _isPolling;
     private bool _isRunning;
     private bool _lastArtworkAvailable;
@@ -36,8 +40,8 @@ internal sealed class PresenceWindow : Form
         _startInBackground = startInBackground;
         Text = "Mhan";
         StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(720, 620);
-        MinimumSize = new Size(680, 590);
+        ClientSize = new Size(800, 700);
+        MinimumSize = new Size(760, 660);
         Font = new Font("Segoe UI", 10F);
         _appIcon = Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? (Icon)SystemIcons.Application.Clone();
         Icon = _appIcon;
@@ -49,8 +53,10 @@ internal sealed class PresenceWindow : Form
         _applicationId.Text = savedSettings.DiscordApplicationId;
         _showAppleMusic.Checked = savedSettings.ShowAppleMusic;
         _showSpotify.Checked = savedSettings.ShowSpotify;
+        _showLyrics.Checked = savedSettings.ShowLyrics;
         _showAppleMusic.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
         _showSpotify.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
+        _showLyrics.CheckedChanged += async (_, _) => await OnDisplaySelectionChangedAsync();
         _pollTimer.Tick += async (_, _) => await PollAsync();
         _updateTimer.Tick += async (_, _) => await CheckForUpdatesAsync();
         _updateTimer.Start();
@@ -82,8 +88,8 @@ internal sealed class PresenceWindow : Form
 
     private void BuildInterface()
     {
-        BackColor = Color.FromArgb(255, 249, 241);
-        ForeColor = Color.FromArgb(74, 61, 57);
+        BackColor = Color.FromArgb(245, 247, 251);
+        ForeColor = Color.FromArgb(34, 43, 58);
 
         var layout = new TableLayoutPanel
         {
@@ -96,7 +102,7 @@ internal sealed class PresenceWindow : Form
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 154));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 184));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
@@ -104,15 +110,15 @@ internal sealed class PresenceWindow : Form
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(241, 244, 232), Padding = new Padding(18, 12, 18, 12) };
+        var header = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(231, 238, 249), Padding = new Padding(20, 14, 20, 14) };
         RoundControl(header, 14);
         var musicMark = new Label
         {
             Text = "♫",
             TextAlign = ContentAlignment.MiddleCenter,
             Font = new Font("Segoe UI Symbol", 18F, FontStyle.Bold),
-            ForeColor = Color.FromArgb(103, 130, 82),
-            BackColor = Color.FromArgb(231, 239, 219),
+            ForeColor = Color.FromArgb(74, 103, 187),
+            BackColor = Color.FromArgb(219, 229, 249),
             Dock = DockStyle.Fill,
             Margin = new Padding(0, 6, 0, 6)
         };
@@ -139,9 +145,9 @@ internal sealed class PresenceWindow : Form
         };
         var subtitle = new Label
         {
-            Text = "Apple Music + Spotify  →  Discord",
+            Text = "เพลงและ Lyrics Preview  →  Discord",
             Dock = DockStyle.Fill,
-            ForeColor = Color.FromArgb(132, 139, 111),
+            ForeColor = Color.FromArgb(91, 111, 151),
             Font = new Font("Segoe UI", 9.5F),
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty
@@ -167,7 +173,7 @@ internal sealed class PresenceWindow : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 3,
-            RowCount = 4,
+            RowCount = 5,
             Padding = new Padding(18, 8, 18, 8),
             BackColor = musicCard.BackColor,
             Margin = Padding.Empty
@@ -177,6 +183,7 @@ internal sealed class PresenceWindow : Form
         musicContent.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+        musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         musicContent.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         var musicHeading = CreateSectionHeading("การแสดงผล");
@@ -207,8 +214,8 @@ internal sealed class PresenceWindow : Form
             Text = "♫",
             TextAlign = ContentAlignment.MiddleCenter,
             Font = new Font("Segoe UI Symbol", 13F, FontStyle.Bold),
-            ForeColor = Color.FromArgb(103, 130, 82),
-            BackColor = Color.FromArgb(231, 239, 219),
+            ForeColor = Color.FromArgb(74, 103, 187),
+            BackColor = Color.FromArgb(219, 229, 249),
             Dock = DockStyle.Fill,
             Margin = new Padding(0, 1, 6, 1)
         };
@@ -255,6 +262,37 @@ internal sealed class PresenceWindow : Form
         musicContent.Controls.Add(spotifyNote, 0, 3);
         musicContent.Controls.Add(_showSpotify, 1, 3);
         musicContent.Controls.Add(spotifyDetail, 2, 3);
+
+        _showLyrics.Text = "แชร์เนื้อเพลง";
+        _showLyrics.Dock = DockStyle.Fill;
+        _showLyrics.AutoSize = false;
+        _showLyrics.Font = new Font(Font, FontStyle.Bold);
+        _showLyrics.ForeColor = ForeColor;
+        _showLyrics.TextAlign = ContentAlignment.MiddleLeft;
+        _showLyrics.Margin = Padding.Empty;
+        var lyricsNote = new Label
+        {
+            Text = "♪",
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI Symbol", 13F, FontStyle.Bold),
+            ForeColor = Color.FromArgb(74, 103, 187),
+            BackColor = Color.FromArgb(219, 229, 249),
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 1, 6, 1)
+        };
+        RoundControl(lyricsNote, 10);
+        var lyricsDetail = new Label
+        {
+            Text = "แสดงบรรทัดที่กำลังร้องในสถานะ Discord",
+            Dock = DockStyle.Fill,
+            AutoEllipsis = true,
+            ForeColor = Color.FromArgb(117, 130, 149),
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(6, 0, 0, 0)
+        };
+        musicContent.Controls.Add(lyricsNote, 0, 4);
+        musicContent.Controls.Add(_showLyrics, 1, 4);
+        musicContent.Controls.Add(lyricsDetail, 2, 4);
         musicCard.Controls.Add(musicContent);
 
         var discordCard = CreateCard();
@@ -300,7 +338,7 @@ internal sealed class PresenceWindow : Form
             Text = "สร้างหรือดู Application ID ใน Discord Developer Portal  ↗",
             AutoSize = false,
             Dock = DockStyle.Fill,
-            LinkColor = Color.FromArgb(103, 130, 82),
+            LinkColor = Color.FromArgb(74, 103, 187),
             ActiveLinkColor = Color.FromArgb(76, 101, 59),
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = Padding.Empty
@@ -317,7 +355,7 @@ internal sealed class PresenceWindow : Form
         actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 18));
         actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
         _startButton.Text = "บันทึก ID และเริ่มแชร์";
-        StyleButton(_startButton, Color.FromArgb(132, 153, 111), Color.White);
+        StyleButton(_startButton, Color.FromArgb(78, 104, 184), Color.White);
         _startButton.Margin = new Padding(0, 0, 8, 0);
         _startButton.Click += async (_, _) => await StartPresenceAsync();
 
@@ -380,12 +418,12 @@ internal sealed class PresenceWindow : Form
 
     private static Panel CreateCard()
     {
-        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(255, 253, 249), Padding = new Padding(16) };
+        var card = new Panel { Dock = DockStyle.Fill, BackColor = Color.White, Padding = new Padding(16) };
         RoundControl(card, 14);
         card.Paint += (_, e) =>
         {
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using var pen = new Pen(Color.FromArgb(237, 226, 215));
+            using var pen = new Pen(Color.FromArgb(222, 229, 239));
             using var path = CreateRoundedPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 14);
             e.Graphics.DrawPath(pen, path);
         };
@@ -434,7 +472,7 @@ internal sealed class PresenceWindow : Form
         Text = text,
         AutoSize = true,
         Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-        ForeColor = Color.FromArgb(45, 41, 45)
+        ForeColor = Color.FromArgb(34, 43, 58)
     };
 
     private static void StyleButton(Button button, Color backColor, Color foreColor)
@@ -514,6 +552,8 @@ internal sealed class PresenceWindow : Form
             if (_autoStartMenuItem is not null) _autoStartMenuItem.Checked = true;
             _isRunning = true;
             _lastTrackKey = null;
+            _lastLyric = null;
+            _currentArtwork = null;
             _lastArtworkAvailable = false;
             _applicationId.Enabled = false;
             _startButton.Enabled = false;
@@ -537,6 +577,7 @@ internal sealed class PresenceWindow : Form
             settings.DiscordApplicationId = _applicationId.Text.Trim();
             settings.ShowAppleMusic = _showAppleMusic.Checked;
             settings.ShowSpotify = _showSpotify.Checked;
+            settings.ShowLyrics = _showLyrics.Checked;
             SettingsStore.Save(settings);
 
             if (!_showAppleMusic.Checked && !_showSpotify.Checked)
@@ -571,6 +612,8 @@ internal sealed class PresenceWindow : Form
         _startButton.Enabled = true;
         _stopButton.Enabled = false;
         _lastTrackKey = null;
+        _lastLyric = null;
+        _currentArtwork = null;
         _lastArtworkAvailable = false;
         _track.Text = "";
 
@@ -613,14 +656,30 @@ internal sealed class PresenceWindow : Form
             }
 
             var key = $"{track.ServiceName}\u001f{track.Title}\u001f{track.Artist}";
-            if (key != _lastTrackKey || !_discord.IsConnected)
+            var trackChanged = key != _lastTrackKey;
+            if (trackChanged || !_discord.IsConnected)
             {
-                var artwork = await _artworkLookup.FindAsync(track.Title, track.Artist);
+                _currentArtwork = await _artworkLookup.FindAsync(track.Title, track.Artist);
                 if (!_isRunning) return;
-                track = track with { ArtworkUrl = artwork?.ImageUrl, TrackUrl = artwork?.TrackUrl };
-                await _discord.SetTrackAsync(_applicationId.Text.Trim(), track, CancellationToken.None);
                 _lastTrackKey = key;
-                _lastArtworkAvailable = artwork is not null;
+                _lastArtworkAvailable = _currentArtwork is not null;
+                _lastLyric = null;
+            }
+
+            var lyric = _showLyrics.Checked
+                ? await _lyricsDisplay.GetLineAsync(track.Title, track.Artist, track.Position)
+                : null;
+            if (!_isRunning) return;
+            track = track with
+            {
+                ArtworkUrl = _currentArtwork?.ImageUrl,
+                TrackUrl = _currentArtwork?.TrackUrl,
+                PreviewLyric = lyric
+            };
+            if (trackChanged || lyric != _lastLyric || !_discord.IsConnected)
+            {
+                await _discord.SetTrackAsync(_applicationId.Text.Trim(), track, CancellationToken.None);
+                _lastLyric = lyric;
             }
             SetStatus(!_lastArtworkAvailable
                 ? $"กำลังแชร์ {track.ServiceName} ไปยัง Discord (ไม่พบรูปปกในแคตตาล็อก)"
@@ -744,4 +803,3 @@ internal sealed class PresenceWindow : Form
         base.Dispose(disposing);
     }
 }
-

@@ -7,6 +7,7 @@ internal sealed class AppSettings
     public string DiscordApplicationId { get; set; } = "";
     public bool ShowAppleMusic { get; set; } = true;
     public bool ShowSpotify { get; set; }
+    public bool ShowLyrics { get; set; } = true;
     public string EncryptedGitHubToken { get; set; } = "";
 }
 
@@ -35,4 +36,3 @@ internal static class SettingsStore
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
     }
 }
-
